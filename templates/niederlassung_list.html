@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!-- niederlassung_list.html -->
+<h1>Niederlassungen</h1>
+<ul>
+    {% for niederlassung in niederlassungen %}
+    <li>
+        <a href="{{ niederlassung.get_absolute_url }}">{{ niederlassung.name }}</a>
+        <a href="{{ niederlassung.get_update_url }}">Bearbeiten</a>
+        <a href="{{ niederlassung.get_delete_url }}">Löschen</a>
+    </li>
+    {% endfor %}
+</ul>
+<a href="{% url 'PersonaleinsatzplanHaeH:niederlassung_create' %}">Neue Niederlassung erstellen</a>
+
+<a href="{% url 'home' %}">Zurück zur Startseite</a>
+
+</body>
+</html>

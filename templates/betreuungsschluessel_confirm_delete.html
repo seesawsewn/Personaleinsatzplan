@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!-- betreuungsschluessel_confirm_delete.html -->
+<h1>Betreuungsschlüssel löschen</h1>
+<p>Möchten Sie den Betreuungsschlüssel "{{ betreuungsschluessel.name }}" wirklich löschen?</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Ja, löschen</button>
+    <a href="{% url 'PersonaleinsatzplanHaeH:betreuungsschluessel_detail' betreuungsschluessel.pk %}">Abbrechen</a>
+</form>
+
+</body>
+</html>

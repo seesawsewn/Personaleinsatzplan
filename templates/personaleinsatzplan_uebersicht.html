@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Personaleinsatzplanübersicht</title>
+</head>
+<body>
+
+<h2>Personaleinsatzplan: {{ personaleinsatzplan.name }}</h2>
+
+<table >
+    <thead>
+        <tr>
+            <th>Auftrag</th>
+            <th>Betreuungsschlüssel</th>
+            <th>Position</th>
+            <th>Klienten pro Betreuer</th>
+            <th>Mitarbeiter</th>
+            <th>Anteil Stunden pro Woche</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for auftrag_detail in auftrag_details %}
+            {% for betreuungsschluessel in auftrag_detail.betreuungsschluessel %}
+                <tr>
+                    <td>{{ auftrag_detail.auftrag.name }}</td>
+                    <td>{{ betreuungsschluessel.name }}</td>
+                    <td>{{ betreuungsschluessel.position }}</td>
+                    <td>{{ betreuungsschluessel.klienten_pro_betreuer }}</td>
+                    <td>
+                        {% for mitarbeiter in betreuungsschluessel.mitarbeiter %}
+                            {{ mitarbeiter.name }}<br>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for mitarbeiter in betreuungsschluessel.mitarbeiter %}
+                            {{ mitarbeiter.anteil_stunden }}<br>
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_pdf' personaleinsatzplan.pk %}">PDF-Bericht herunterladen</a>
+
+
+<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_list' %}">Übersicht der Personaleinsatzpläne</a>
+
+
+</body>
+</html>

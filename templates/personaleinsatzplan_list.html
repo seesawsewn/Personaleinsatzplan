@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!-- personaleinsatzplan_list.html -->
+<h1>Personaleinsatzpläne</h1>
+<ul>
+    {% for personaleinsatzplan in personaleinsatzplaene %}
+    <li>
+        <a href="{{ personaleinsatzplan.get_absolute_url }}">{{ personaleinsatzplan.name }}</a>
+        <a href="{{ personaleinsatzplan.get_update_url }}">Bearbeiten</a>
+        <a href="{{ personaleinsatzplan.get_delete_url }}">Löschen</a>
+        <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_uebersicht' personaleinsatzplan.id %}">Übersicht anzeigen</a>
+    </li>
+    </li>
+    {% endfor %}
+</ul>
+<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_create' %}">Neuen Personaleinsatzplan erstellen</a>
+
+<a href="{% url 'home' %}">Zurück zur Startseite</a>
+</body>
+</html>

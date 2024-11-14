@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!-- auftrag_detail.html -->
+<h1>{{ auftrag.name }}</h1>
+
+<p><strong>Vergabenummer:</strong> {{ auftrag.vergabenummer }}</p>
+<p><strong>Optionsnummer:</strong> {{ auftrag.optionsnummer }}</p>
+<p><strong>Maßnahmenummer:</strong> {{ auftrag.massnahmenummer }}</p>
+<p><strong>Startdatum:</strong> {{ auftrag.startdatum }}</p>
+<p><strong>Enddatum:</strong> {{ auftrag.enddatum }}</p>
+<p><strong>Maximale Klienten:</strong> {{ auftrag.max_klienten }}</p>
+<p><strong>Mindestklienten:</strong> {{ auftrag.mindest_klienten }}</p>
+<p><strong>Aktuelle Klienten:</strong> {{ auftrag.aktuell_klienten }}</p>
+<p><strong>Personaleinsatzplan:</strong> <a href="{{ auftrag.personaleinsatzplan.get_absolute_url }}">{{ auftrag.personaleinsatzplan.name }}</a></p>
+
+<h2>Betreuungsschlüssel</h2>
+<ul>
+    {% for betreuungsschluessel in auftrag.betreuungsschluessel.all %}
+    <li>
+        <a href="{{ betreuungsschluessel.get_absolute_url }}">{{ betreuungsschluessel.name }}</a>
+    </li>
+    {% endfor %}
+</ul>
+
+<a href="{% url 'PersonaleinsatzplanHaeH:betreuungsschluessel_create' %}">Neuen Betreuungsschlüssel erstellen</a>
+
+<a href="{% url 'PersonaleinsatzplanHaeH:auftrag_update' auftrag.pk %}">Bearbeiten</a>
+<a href="{% url 'PersonaleinsatzplanHaeH:auftrag_delete' auftrag.pk %}">Löschen</a>
+<a href="{% url 'PersonaleinsatzplanHaeH:auftrag_list' %}">Zurück zur Übersicht der Aufträge</a>
+
+</body>
+</html>

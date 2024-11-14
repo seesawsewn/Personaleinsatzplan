@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!-- personaleinsatzplan_confirm_delete.html -->
+<h1>Personaleinsatzplan löschen</h1>
+<p>Möchten Sie den Personaleinsatzplan "{{ personaleinsatzplan.name }}" wirklich löschen?</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Ja, löschen</button>
+    <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_detail' personaleinsatzplan.pk %}">Abbrechen</a>
+</form>
+
+</body>
+</html>

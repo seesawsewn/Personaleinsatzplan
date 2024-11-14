@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!-- mitarbeiter_list.html -->
+<h1>Mitarbeiter</h1>
+<ul>
+    {% for mitarbeiter in mitarbeiter %}
+    <li>
+        <a href="{{ mitarbeiter.get_absolute_url }}">{{ mitarbeiter.vorname }} {{ mitarbeiter.nachname }}</a>
+        <a href="{{ mitarbeiter.get_update_url }}">Bearbeiten</a>
+        <a href="{{ mitarbeiter.get_delete_url }}">Löschen</a>
+    </li>
+    {% endfor %}
+</ul>
+<a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_create' %}">Neuen Mitarbeiter erstellen</a>
+
+<a href="{% url 'home' %}">Zurück zur Startseite</a>
+
+</body>
+</html>

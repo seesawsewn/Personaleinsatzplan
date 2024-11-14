@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!-- position_detail.html -->
+<h1>{{ position.bezeichnung }}</h1>
+
+<p><strong>Bezeichnung:</strong> {{ position.bezeichnung }}</p>
+
+<a href="{% url 'PersonaleinsatzplanHaeH:position_update' position.pk %}">Bearbeiten</a>
+<a href="{% url 'PersonaleinsatzplanHaeH:position_delete' position.pk %}">Löschen</a>
+<a href="{% url 'PersonaleinsatzplanHaeH:position_list' %}">Zurück zur Übersicht der Positionen</a>
+
+</body>
+</html>

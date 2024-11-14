@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!-- personaleinsatzplan_detail.html -->
+<h1>{{ personaleinsatzplan.name }}</h1>
+
+<p><strong>Startdatum:</strong> {{ personaleinsatzplan.startdatum }}</p>
+<p><strong>Enddatum:</strong> {{ personaleinsatzplan.enddatum }}</p>
+<p><strong>Kostenträger:</strong> {{ personaleinsatzplan.kostentraeger }}</p>
+<p><strong>Ersteller:</strong> {{ personaleinsatzplan.ersteller }}</p>
+<p><strong>Version:</strong> {{ personaleinsatzplan.version }}</p>
+<p><strong>Status:</strong> {{ personaleinsatzplan.status }}</p>
+
+<h2>Aufträge</h2>
+<ul>
+    {% for auftrag in personaleinsatzplan.auftraege.all %}
+    <li>
+        <a href="{{ auftrag.get_absolute_url }}">{{ auftrag.name }}</a>
+    </li>
+    {% endfor %}
+</ul>
+
+<a href="{% url 'PersonaleinsatzplanHaeH:auftrag_create' %}">Neuen Auftrag erstellen</a>
+
+<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_update' personaleinsatzplan.pk %}">Bearbeiten</a>
+<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_delete' personaleinsatzplan.pk %}">Löschen</a>
+<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_list' %}">Übersicht der Personaleinsatzpläne</a>
+
+
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!-- betreuungsschluessel_list.html -->
+<h1>Betreuungsschlüssel</h1>
+<ul>
+    {% for betreuungsschluessel in betreuungsschluessel %}
+    <li>
+        <a href="{{ betreuungsschluessel.get_absolute_url }}">{{ betreuungsschluessel.name }}</a>
+        <a href="{{ betreuungsschluessel.get_update_url }}">Bearbeiten</a>
+        <a href="{{ betreuungsschluessel.get_delete_url }}">Löschen</a>
+    </li>
+    {% endfor %}
+</ul>
+<a href="{% url 'PersonaleinsatzplanHaeH:betreuungsschluessel_list' %}">Neuen Betreuungsschlüssel erstellen</a>
+
+<a href="{% url 'home' %}">Zurück zur Startseite</a>
+
+</body>
+</html>

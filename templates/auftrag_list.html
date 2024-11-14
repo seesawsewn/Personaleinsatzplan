@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<h1>Aufträge</h1>
+<ul>
+    {% for auftrag in auftraege %}
+    <li>
+        <a href="{{ auftrag.get_absolute_url }}">{{ auftrag.name }}</a>
+        <a href="{{ auftrag.get_update_url }}">Bearbeiten</a>
+        <a href="{{ auftrag.get_delete_url }}">Löschen</a>
+    </li>
+    {% endfor %}
+</ul>
+<a href="{% url 'PersonaleinsatzplanHaeH:auftrag_create' %}">Neuen Auftrag erstellen</a>
+
+<a href="{% url 'home' %}">Zurück zur Startseite</a>
+</body>
+</html>

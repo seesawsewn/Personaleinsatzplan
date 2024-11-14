@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!-- mitarbeiter_detail.html -->
+<h1>{{ mitarbeiter.vorname }} {{ mitarbeiter.nachname }}</h1>
+
+<p><strong>Qualifikation:</strong> {{ mitarbeiter.qualifikation }}</p>
+<p><strong>Maximale wöchentliche Arbeitszeit:</strong> {{ mitarbeiter.max_woechentliche_arbeitszeit }} Stunden</p>
+<p><strong>Verfügbare Stunden:</strong> {{ differenz_stunden }} Stunden</p>
+<p><strong>Personalnummer:</strong> {{ mitarbeiter.personalnummer }}</p>
+<p><strong>Geburtsdatum:</strong> {{ mitarbeiter.geburtsdatum }}</p>
+<p><strong>Vertragsbeginn:</strong> {{ mitarbeiter.vertragsbeginn }}</p>
+<p><strong>Vertragsende (befristet):</strong> {{ mitarbeiter.vertragsendeBefristet }}</p>
+<p><strong>Unbefristet:</strong> {{ mitarbeiter.unbefristet }}</p>
+<p><strong>Niederlassung:</strong> {{ mitarbeiter.niederlassung }}</p>
+
+<h3>Aufträge und Betreuungsschlüssel:</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Auftrag</th>
+            <th>Anteil Stunden pro Woche</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for auftrag_info in auftraege_info %}
+        <tr>
+            <td>{{ auftrag_info.auftrag.name }}</td>
+            <td>{{ auftrag_info.anteil_stunden_pro_woche }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_update' mitarbeiter.pk %}">Bearbeiten</a>
+<a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_delete' mitarbeiter.pk %}">Löschen</a>
+<a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_list' %}">Zurück zur Übersicht der Mitarbeiter</a>
+</body>
+</html>
