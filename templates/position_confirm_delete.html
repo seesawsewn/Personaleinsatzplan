@@ -12,7 +12,7 @@
 <form method="post">
     {% csrf_token %}
     <button type="submit">Ja, löschen</button>
-    <a href="{% url 'PersonaleinsatzplanHaeH:position_detail' position.pk %}">Abbrechen</a>
+    <a href="{% url 'PersonaleinsatzplanHaeH:position_list' %}">Abbrechen</a>
 </form>
 
 </body>

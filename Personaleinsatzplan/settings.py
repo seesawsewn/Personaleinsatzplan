@@ -37,7 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "PersonaleinsatzplanHaeH.apps.PersonaleinsatzplanhaehConfig"
+    "PersonaleinsatzplanHaeH.apps.PersonaleinsatzplanhaehConfig",
+    'dal',
+    'dal_select2',
 ]
 
 MIDDLEWARE = [
@@ -112,6 +114,16 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+
+USE_L10N = False
+
+DATE_INPUT_FORMATS = [
+    '%d-%m-%Y',  # '25-12-2024'
+    '%Y-%m-%d',  # '2024-12-25'
+    '%Y-%m',     # '2024-12'
+    '%m-%Y',     # '12-2024'
+]
+
 
 
 # Static files (CSS, JavaScript, Images)

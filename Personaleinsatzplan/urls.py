@@ -20,6 +20,6 @@ from PersonaleinsatzplanHaeH.views import StartseiteView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', StartseiteView.as_view(), name='home'),
+    path('', StartseiteView.as_view(), name='startseite'),
     path('PersonaleinsatzplanHaeH/', include('PersonaleinsatzplanHaeH.urls')),
 ]

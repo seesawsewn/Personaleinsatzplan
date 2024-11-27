@@ -1,18 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Auftrag löschen</title>
 </head>
 <body>
-<!-- betreuungsschluessel_confirm_delete.html -->
-<h1>Betreuungsschlüssel löschen</h1>
-<p>Möchten Sie den Betreuungsschlüssel "{{ betreuungsschluessel.name }}" wirklich löschen?</p>
+
+<h1>Auftrag löschen</h1>
+<p>Möchten Sie den Auftrag "{{ auftrag.name }}" wirklich löschen?</p>
 
 <form method="post">
     {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.GET.next }}">
     <button type="submit">Ja, löschen</button>
-    <a href="{% url 'PersonaleinsatzplanHaeH:betreuungsschluessel_detail' betreuungsschluessel.pk %}">Abbrechen</a>
+    
+    <!-- Link zum Abbrechen, der den `next`-Parameter verwendet, falls vorhanden -->
+    {% if request.GET.next %}
+        <a href="{{ request.GET.next }}">Abbrechen</a>
+    {% else %}
+        <!-- Fallback: Zur Personaleinsatzplan-Übersicht zurückkehren -->
+        <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_detail' auftrag.personaleinsatzplan.pk %}">Abbrechen</a>
+    {% endif %}
 </form>
 
 </body>

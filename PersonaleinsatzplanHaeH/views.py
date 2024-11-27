@@ -44,7 +44,7 @@ class PersonaleinsatzplanCreateView(CreateView):
         return initial
 
     def get_success_url(self):
-        # Prüfe den next-Parameter
+        # Prüfe den `next`-Parameter
         next_url = self.request.POST.get('next') or self.request.GET.get('next')
         if next_url:
             return next_url
@@ -79,6 +79,67 @@ class PersonaleinsatzplanDetailView(DetailView):
     model = Personaleinsatzplan
     template_name = 'personaleinsatzplan_detail.html'
     context_object_name = 'personaleinsatzplan'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        personaleinsatzplan = self.object
+
+        # Lade die Aufträge und dazugehörige Betreuungsschlüssel
+        auftrag_details = []
+        auftraege = Auftrag.objects.filter(personaleinsatzplan=personaleinsatzplan).prefetch_related(
+            'betreuungsschluessel__mitarbeiter_zuweisungen__mitarbeiter'
+        )
+
+        for auftrag in auftraege:
+            betreuungsschluessel_details = []
+            for schluessel in auftrag.betreuungsschluessel.all():
+                mitarbeiter_zuweisungen = schluessel.mitarbeiter_zuweisungen.all()
+
+                # Mitarbeiterdaten sammeln
+                mitarbeiter_list = []
+                for zuweisung in mitarbeiter_zuweisungen:
+                    mitarbeiter_list.append({
+                        'id': zuweisung.mitarbeiter.id,
+                        'nachname': zuweisung.mitarbeiter.nachname,
+                        'vorname': zuweisung.mitarbeiter.vorname,
+                        'geburtsdatum': zuweisung.mitarbeiter.geburtsdatum,
+                        'qualifikation': zuweisung.mitarbeiter.qualifikation,
+                        'max_woechentliche_arbeitszeit': zuweisung.mitarbeiter.max_woechentliche_arbeitszeit,
+                        'anteil_stunden_pro_woche': zuweisung.anteil_stunden_pro_woche,
+                        'freie_stunden': zuweisung.freie_stunden,
+                        'kommentar': zuweisung.kommentar,
+                        'mitarbeiter_betreuungsschluessel_id': zuweisung.id,
+                    })
+
+                # Betreuungsschlüsseldetails sammeln
+                betreuungsschluessel_details.append({
+                    'id': schluessel.id,
+                    'name': schluessel.name,
+                    'position': schluessel.position,
+                    'klienten_pro_betreuer': schluessel.klienten_pro_betreuer,
+                    'benoetigte_VZA_max': schluessel.benoetigte_VZA_max,
+                    'benoetigte_VZA_mindest': schluessel.benoetigte_VZA_mindest,
+                    'benoetigte_VZA_aktuell': schluessel.benoetigte_VZA_aktuell,
+                    'abgedeckte_VZA': schluessel.abgedeckte_VZA,
+                    'differenz_VZA_max': schluessel.differenz_VZA_max,
+                    'differenz_VZA_mindest': schluessel.differenz_VZA_mindest,
+                    'differenz_VZA_aktuell': schluessel.differenz_VZA_aktuell,
+                    'mitarbeiter': mitarbeiter_list,
+                })
+
+            # Auftragsdetails sammeln
+            auftrag_details.append({
+                'auftrag': auftrag,
+                'betreuungsschluessel': betreuungsschluessel_details,
+            })
+
+        # Füge die Daten dem Kontext hinzu
+        context['auftrag_details'] = auftrag_details
+
+        # Rück-Link zur vorherigen Seite oder Standard auf die Startseite setzen
+        context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
+        return context
+
 
 
 # Aktualisieren eines Personaleinsatzplans
@@ -594,71 +655,76 @@ class Personaleinsatzplanuebersicht(DetailView):
         context = super().get_context_data(**kwargs)
         personaleinsatzplan = self.object
 
-        # Aufträge abrufen
+        # Aufträge des Personaleinsatzplans abrufen
         auftraege = Auftrag.objects.filter(personaleinsatzplan=personaleinsatzplan).prefetch_related(
             'betreuungsschluessel__mitarbeiter_zuweisungen__mitarbeiter'
         )
 
         auftrag_details = []
 
-        # Überprüfe, ob es Aufträge gibt
-        if auftraege.exists():
-            for auftrag in auftraege:
-                betreuungsschluessel_details = []
+        # Iteriere durch die Aufträge
+        for auftrag in auftraege:
+            if not auftrag.id:
+                continue  # Überspringe ungültige Aufträge
 
-                # Betreuungsschlüssel-Daten abrufen und überprüfen, ob sie vorhanden sind
-                betreuungsschluessel = auftrag.betreuungsschluessel.all()
-                if betreuungsschluessel.exists():
-                    for schluessel in betreuungsschluessel:
-                        mitarbeiter_zuweisungen = schluessel.mitarbeiter_zuweisungen.all()
+            betreuungsschluessel_details = []
+            # Betreuungsschlüssel des Auftrags abrufen
+            betreuungsschluessel = auftrag.betreuungsschluessel.all()
 
-                        # Mitarbeiterliste vorbereiten und nur hinzufügen, wenn Mitarbeiter vorhanden sind
-                        mitarbeiter_list = []
-                        if mitarbeiter_zuweisungen.exists():
-                            for zuweisung in mitarbeiter_zuweisungen:
-                                if zuweisung.mitarbeiter:  # Überprüfe, ob der Mitarbeiter existiert
-                                    mitarbeiter_list.append({
-                                        'id': zuweisung.mitarbeiter.id,
-                                        'nachname': zuweisung.mitarbeiter.nachname,
-                                        'vorname': zuweisung.mitarbeiter.vorname,
-                                        'geburtsdatum': zuweisung.mitarbeiter.geburtsdatum,
-                                        'qualifikation': zuweisung.mitarbeiter.qualifikation,
-                                        'max_woechentliche_arbeitszeit': zuweisung.mitarbeiter.max_woechentliche_arbeitszeit,
-                                        'anteil_stunden_pro_woche': zuweisung.anteil_stunden_pro_woche,
-                                        'differenz': MitarbeiterBerechnungen.berechne_differenz_max_arbeitszeit(zuweisung.mitarbeiter),
-                                        'kommentar': zuweisung.kommentar,
-                                        'mitarbeiter_betreuungsschluessel_id': zuweisung.id,
-                                    })
+            for schluessel in betreuungsschluessel:
+                if not schluessel.id:
+                    continue  # Überspringe ungültige Betreuungsschlüssel
 
-                        # Betreuungsschlüssel-Daten zum Auftragsdetail hinzufügen
-                        betreuungsschluessel_details.append({
-                            'id': schluessel.id,
-                            'name': schluessel.name,
-                            'position': schluessel.position,
-                            'klienten_pro_betreuer': schluessel.klienten_pro_betreuer,
-                            'mitarbeiter': mitarbeiter_list,
-                            'benoetigte_VZA_max': schluessel.benoetigte_VZA_max,
-                            'benoetigte_VZA_mindest': schluessel.benoetigte_VZA_mindest,
-                            'benoetigte_VZA_aktuell': schluessel.benoetigte_VZA_aktuell,
-                            'abgedeckte_VZA': schluessel.abgedeckte_VZA,
-                            'differenz_VZA_max': schluessel.differenz_VZA_max,
-                            'differenz_VZA_mindest': schluessel.differenz_VZA_mindest,
-                            'differenz_VZA_aktuell': schluessel.differenz_VZA_aktuell,
+                # Mitarbeiter-Zuweisungen des Betreuungsschlüssels abrufen
+                mitarbeiter_zuweisungen = schluessel.mitarbeiter_zuweisungen.all()
+                mitarbeiter_list = []
+
+                for zuweisung in mitarbeiter_zuweisungen:
+                    if zuweisung.mitarbeiter and zuweisung.mitarbeiter.id:
+                        mitarbeiter_list.append({
+                            'id': zuweisung.mitarbeiter.id,
+                            'nachname': zuweisung.mitarbeiter.nachname,
+                            'vorname': zuweisung.mitarbeiter.vorname,
+                            'geburtsdatum': zuweisung.mitarbeiter.geburtsdatum,
+                            'qualifikation': zuweisung.mitarbeiter.qualifikation,
+                            'max_woechentliche_arbeitszeit': zuweisung.mitarbeiter.max_woechentliche_arbeitszeit,
+                            'anteil_stunden_pro_woche': zuweisung.anteil_stunden_pro_woche,
+                            'differenz': MitarbeiterBerechnungen.berechne_differenz_max_arbeitszeit(zuweisung.mitarbeiter),
+                            'kommentar': zuweisung.kommentar,
+                            'mitarbeiter_betreuungsschluessel_id': zuweisung.id,
                         })
 
-                # Auftragsdetails nur hinzufügen, wenn der Auftrag Betreuungsschlüssel hat
-                auftrag_details.append({
-                    'auftrag': auftrag,
-                    'betreuungsschluessel': betreuungsschluessel_details,
+                # Betreuungsschlüssel-Daten hinzufügen
+                betreuungsschluessel_details.append({
+                    'id': schluessel.id,
+                    'name': schluessel.name,
+                    'position': schluessel.position,
+                    'klienten_pro_betreuer': schluessel.klienten_pro_betreuer,
+                    'mitarbeiter': mitarbeiter_list,
+                    'benoetigte_VZA_max': schluessel.benoetigte_VZA_max,
+                    'benoetigte_VZA_mindest': schluessel.benoetigte_VZA_mindest,
+                    'benoetigte_VZA_aktuell': schluessel.benoetigte_VZA_aktuell,
+                    'abgedeckte_VZA': schluessel.abgedeckte_VZA,
+                    'differenz_VZA_max': schluessel.differenz_VZA_max,
+                    'differenz_VZA_mindest': schluessel.differenz_VZA_mindest,
+                    'differenz_VZA_aktuell': schluessel.differenz_VZA_aktuell,
                 })
 
-        # Füge die gesammelten Auftragsdetails dem Kontext hinzu
+            # Auftragsdetails hinzufügen
+            auftrag_details.append({
+                'auftrag': auftrag,
+                'betreuungsschluessel': betreuungsschluessel_details,
+            })
+
+        # Füge die Auftragsdetails zum Kontext hinzu
         context['auftrag_details'] = auftrag_details
 
         # Rück-Link zur vorherigen Seite oder zur Startseite hinzufügen
         context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
 
         return context
+
+
 
 
 
@@ -1015,6 +1081,7 @@ class PersonaleinsatzplaeneFuerNiederlassungView(ListView):
         context = super().get_context_data(**kwargs)
         context['niederlassung'] = Niederlassung.objects.get(pk=self.kwargs.get('pk'))
 
-        # next-Parameter auslesen, Standardwert: Startseite
+        # `next`-Parameter auslesen, Standardwert: Startseite
         context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
         return context
+

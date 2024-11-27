@@ -13,10 +13,9 @@
 <ul>
     {% for niederlassung in niederlassungen %}
     <li>
-        <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_niederlassung' niederlassung.pk %}?next={% url 'PersonaleinsatzplanHaeH:startseite' %}">
+        <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplaene_fuer_niederlassung' niederlassung.pk %}?next={% url 'PersonaleinsatzplanHaeH:startseite' %}">
             {{ niederlassung.name }}
         </a>
-
     
     </li>
     {% endfor %}
@@ -31,6 +30,9 @@
 </a>
 
 
+<a href="{% url 'PersonaleinsatzplanHaeH:alle_personaleinsatzplaene_pdf' %}">
+    Alle Personaleinsatzpläne als PDF herunterladen
+</a>
 
 
 <li>

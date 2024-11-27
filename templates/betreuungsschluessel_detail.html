@@ -21,8 +21,8 @@
     {% for zuweisung in betreuungsschluessel.mitarbeiter_zuweisungen.all %}
     <li>{{ zuweisung.mitarbeiter }} - {{ zuweisung.position }} - {{ zuweisung.anteil_stunden_pro_woche }}</li>
         <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_betreuungsschluessel_delete' zuweisung.id %}"
-   onclick="return confirm('Möchten Sie die Zuordnung wirklich entfernen?');"
-   class="btn btn-danger">Entfernen</a>
+            onclick="return confirm('Möchten Sie die Zuordnung wirklich entfernen?');"
+            class="btn btn-danger">Entfernen</a>
 
     {% endfor %}
 </ul>

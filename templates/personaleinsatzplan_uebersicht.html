@@ -6,7 +6,6 @@
 </head>
 <body>
 
-
 <h2>{{ personaleinsatzplan.name }}</h2>
 
 <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_update' personaleinsatzplan.pk %}?next={{ request.path }}">
@@ -113,8 +112,8 @@
                         <td>{{ mitarbeiter.geburtsdatum }}</td>
                         <td>{{ mitarbeiter.qualifikation }}</td>
                         <td>{{ mitarbeiter.max_woechentliche_arbeitszeit }}</td>
-                        <td>{{ mitarbeiter.anteil_stunden_pro_woche }}</td>
-                        <td>{{ mitarbeiter.differenz }}</td>
+                        <td>{{ mitarbeiter.anteil_stunden_pro_woche|floatformat:2 }}</td>
+                        <td>{{ mitarbeiter.freie_stunden|floatformat:2|default:"Nicht berechnet" }}</td>
                         <td>{{ mitarbeiter.kommentar }}</td>
                         <td>
                             <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_betreuungsschluessel_delete' mitarbeiter.mitarbeiter_betreuungsschluessel_id %}">

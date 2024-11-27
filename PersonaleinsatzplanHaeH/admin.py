@@ -22,3 +22,6 @@ admin.site.register(Auftrag)
 admin.site.register(Betreuungsschluessel)
 admin.site.register(MitarbeiterBetreuungsschluessel)
 admin.site.register(VollzeitaequivalentStunden)
+
+class BetreuungsschluesselAdmin(admin.ModelAdmin):
+    list_display = ['id', 'name', 'position', 'klienten_pro_betreuer', 'auftrag']

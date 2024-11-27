@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
@@ -173,6 +175,8 @@ class MitarbeiterBetreuungsschluessel(models.Model):
     mitarbeiter = models.ForeignKey(Mitarbeiter, on_delete=models.PROTECT, null=True, blank=True, related_name='betreuungsschluessel_zuweisungen')
     schluessel = models.ForeignKey(Betreuungsschluessel, on_delete=models.PROTECT, null=True, blank=True, related_name='mitarbeiter_zuweisungen')
     auftrag = models.ForeignKey(Auftrag, on_delete=models.PROTECT, null=True, blank=True, related_name='mitarbeiter_betreuungsschluessel')
+    zugewiesene_stunden = models.FloatField(default=0)  # Summe aller Stunden, die dem Mitarbeiter zugeordnet wurden
+    freie_stunden = models.FloatField(default=0)
 
     def __str__(self):
         return f"{self.mitarbeiter} - {self.schluessel}"
@@ -303,11 +307,7 @@ class VZABerechnen:
         cls.aktualisiere_differenz_vza_mindest(schluessel)
         cls.aktualisiere_differenz_vza_aktuell(schluessel)
 
-@receiver(post_save, sender=MitarbeiterBetreuungsschluessel)
-@receiver(post_delete, sender=MitarbeiterBetreuungsschluessel)
-def mitarbeiter_geaendert_handler(sender, instance, **kwargs):
-    if instance.schluessel:
-        VZABerechnen.mitarbeiter_geaendert(instance.schluessel)
+
 
 @receiver(post_save, sender=Auftrag)
 def auftrag_geaendert_handler(sender, instance, **kwargs):
@@ -318,16 +318,79 @@ def auftrag_geaendert_handler(sender, instance, **kwargs):
 
 class MitarbeiterBerechnungen:
     @staticmethod
-    def berechne_gesamt_stunden_pro_woche(mitarbeiter):
-        total_stunden = MitarbeiterBetreuungsschluessel.objects.filter(mitarbeiter=mitarbeiter).aggregate(
-            total=Sum('anteil_stunden_pro_woche')
-        )['total']
+    def berechne_freie_stunden_im_monat(mitarbeiter, gueltigkeit_monat, gueltigkeit_jahr):
+        """
+        Berechnet die verbleibenden freien Stunden eines Mitarbeiters in einem Monat,
+        berücksichtigt nur Personaleinsatzpläne mit dem Status 'gültig'.
+        """
+        # Filtere nur Personaleinsatzpläne mit Status 'gültig' für den Monat und das Jahr
+        relevante_personaleinsatzplaene = Personaleinsatzplan.objects.filter(
+            status='gueltig',
+            gueltigkeit_monat=gueltigkeit_monat,
+            gueltigkeit_jahr=gueltigkeit_jahr
+        )
 
-        return total_stunden if total_stunden else 0.0
+        # Relevante Betreuungsschlüssel basierend auf den gültigen Personaleinsatzplänen
+        relevante_betreuungsschluessel = Betreuungsschluessel.objects.filter(
+            auftrag__personaleinsatzplan__in=relevante_personaleinsatzplaene
+        )
+
+        # Berechnung der bereits zugeordneten Stunden für den Mitarbeiter
+        zugewiesene_stunden = MitarbeiterBetreuungsschluessel.objects.filter(
+            mitarbeiter=mitarbeiter,
+            schluessel__in=relevante_betreuungsschluessel
+        ).aggregate(total=Sum('anteil_stunden_pro_woche'))['total']
+
+        zugewiesene_stunden = zugewiesene_stunden or 0  # Falls None, dann 0 setzen
+
+        # Freie Stunden berechnen
+        freie_stunden = mitarbeiter.max_woechentliche_arbeitszeit - zugewiesene_stunden
+
+        # Speicher die berechneten Werte in den Betreuungsschlüssel-Zuweisungen
+        betreuungsschluessel_zuweisungen = MitarbeiterBetreuungsschluessel.objects.filter(
+            mitarbeiter=mitarbeiter,
+            schluessel__in=relevante_betreuungsschluessel
+        )
+        for zuweisung in betreuungsschluessel_zuweisungen:
+            zuweisung.zugewiesene_stunden = zugewiesene_stunden
+            zuweisung.freie_stunden = freie_stunden
+            zuweisung.save()
+
+        return freie_stunden
+
+    def berechne_gesamt_stunden_pro_woche_fuer_monat(mitarbeiter, gueltigkeit_monat, gueltigkeit_jahr):
+        """
+        Berechnet die gesamte Anzahl der Stunden pro Woche, die einem Mitarbeiter
+        im angegebenen Monat und Jahr zugewiesen wurden.
+        """
+        # Filtere relevante Personaleinsatzpläne mit Status 'gültig'
+        relevante_personaleinsatzplaene = Personaleinsatzplan.objects.filter(
+            gueltigkeit_monat=gueltigkeit_monat,
+            gueltigkeit_jahr=gueltigkeit_jahr,
+            status='gueltig'
+        )
+
+        # Hole alle relevanten Betreuungsschlüssel
+        relevante_betreuungsschluessel = Betreuungsschluessel.objects.filter(
+            auftrag__personaleinsatzplan__in=relevante_personaleinsatzplaene
+        )
+
+        # Berechne die Summe der Stunden pro Woche für den Mitarbeiter
+        total_stunden = MitarbeiterBetreuungsschluessel.objects.filter(
+            mitarbeiter=mitarbeiter,
+            schluessel__in=relevante_betreuungsschluessel
+        ).aggregate(total=Sum('anteil_stunden_pro_woche'))['total']
+
+        return total_stunden or 0.0  # Falls None, setze 0 zurück
+
 
     @staticmethod
     def berechne_differenz_max_arbeitszeit(mitarbeiter):
-        gesamt_stunden = MitarbeiterBerechnungen.berechne_gesamt_stunden_pro_woche(mitarbeiter)
+        # Vermutlich willst du die monatlichen Stunden für den aktuellen Monat und das Jahr berechnen
+        aktuelles_datum = date.today()
+        gesamt_stunden = MitarbeiterBerechnungen.berechne_gesamt_stunden_pro_woche_fuer_monat(
+            mitarbeiter, aktuelles_datum.month, aktuelles_datum.year
+        )
         differenz = mitarbeiter.max_woechentliche_arbeitszeit - gesamt_stunden
         return differenz
 
@@ -337,8 +400,24 @@ class MitarbeiterBerechnungen:
         return f"{mitarbeiter.vorname} {mitarbeiter.nachname} (Verfügbare Stunden: {differenz:.1f})"
 
 
+
+
+
+
 @receiver(post_save, sender=MitarbeiterBetreuungsschluessel)
 @receiver(post_delete, sender=MitarbeiterBetreuungsschluessel)
-def mitarbeiter_betreuungsschluessel_geaendert_handler(sender, instance, **kwargs):
+def aktualisiere_alle_stunden_handler(sender, instance, **kwargs):
+    """
+    Aktualisiert relevante Berechnungen, wenn eine Zuweisung gespeichert oder gelöscht wird.
+    """
     if instance.mitarbeiter:
+        aktuelles_datum = date.today()
+        # Aktualisiere freie Stunden und zugewiesene Stunden
+        MitarbeiterBerechnungen.berechne_freie_stunden_im_monat(
+            instance.mitarbeiter,
+            aktuelles_datum.month,
+            aktuelles_datum.year
+        )
+        # Optional: Berechnung anderer Werte, falls notwendig
         MitarbeiterBerechnungen.berechne_differenz_max_arbeitszeit(instance.mitarbeiter)
+

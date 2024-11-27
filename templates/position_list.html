@@ -10,7 +10,7 @@
 <ul>
     {% for position in positionen %}
     <li>
-        <a href="{{ position.get_absolute_url }}">{{ position.bezeichnung }}</a>
+        {{ position.bezeichnung }}
         <a href="{{ position.get_update_url }}">Bearbeiten</a>
         <a href="{{ position.get_delete_url }}">Löschen</a>
     </li>
