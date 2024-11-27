@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.urls import reverse
-
+from django.db.models import Sum
 
 class Niederlassung(models.Model):
     name = models.CharField(max_length=255)
@@ -46,7 +46,7 @@ class Mitarbeiter(models.Model):
     vertragsbeginn = models.DateField(blank=True, null=True)
     vertragsendeBefristet = models.DateField(blank=True, null=True)
     unbefristet = models.BooleanField(default=False)
-    niederlassung = models.ForeignKey(Niederlassung, on_delete=models.SET_NULL, null=True, blank=True)
+    niederlassung = models.ForeignKey(Niederlassung, on_delete=models.PROTECT, null=True, blank=True)
 
     def __str__(self):
         return f"{self.vorname} {self.nachname}"
@@ -78,16 +78,32 @@ class PersonaleinsatzplanStatus(models.Model):
 
 
 class Personaleinsatzplan(models.Model):
+    STATUS_CHOICES = [
+        ('entwurf', 'Entwurf'),
+        ('in_bearbeitung', 'in Bearbeitung'),
+        ('gueltig', 'Gültig'),
+        ('archiviert', 'Archiviert'),
+        ('storniert', 'Storniert')
+    ]
+
     name = models.CharField(max_length=255)
-    startdatum = models.DateField()
-    enddatum = models.DateField()
+    gueltigkeit_monat = models.IntegerField(choices=[
+        (1, "Januar"), (2, "Februar"), (3, "März"), (4, "April"),
+        (5, "Mai"), (6, "Juni"), (7, "Juli"), (8, "August"),
+        (9, "September"), (10, "Oktober"), (11, "November"), (12, "Dezember")
+    ])  # Werte 1-12 für Januar-Dezember
+    gueltigkeit_jahr = models.IntegerField()  # Für das Jahr, z.B. 2024
     kostentraeger = models.CharField(max_length=255)
     ersteller = models.CharField(max_length=255)
     version = models.IntegerField()
-    status = models.ForeignKey(PersonaleinsatzplanStatus, on_delete=models.SET_NULL, null=True, blank=True, related_name='personaleinsatzplaene')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='entwurf')
+    niederlassung = models.ForeignKey(
+        'Niederlassung', on_delete=models.PROTECT, null=True, blank=True, related_name='personaleinsatzplaene'
+    )
 
     def __str__(self):
-        return self.name
+        # Gibt den Monatsnamen und das Jahr aus, z.B. "März 2024"
+        return f"{self.name} - {self.get_gueltigkeit_monat_display()} {self.gueltigkeit_jahr}"
 
     def get_absolute_url(self):
         return reverse('PersonaleinsatzplanHaeH:personaleinsatzplan_detail', args=[str(self.id)])
@@ -126,7 +142,7 @@ class Auftrag(models.Model):
 
 class Betreuungsschluessel(models.Model):
     name = models.CharField(max_length=255)
-    position = models.ForeignKey(Position, on_delete=models.SET_NULL, null=True, blank=True)
+    position = models.ForeignKey(Position, on_delete=models.PROTECT, null=True, blank=True)
     klienten_pro_betreuer = models.IntegerField()
     benoetigte_VZA_max = models.FloatField(default=0)
     benoetigte_VZA_mindest = models.FloatField(default=0)
@@ -151,12 +167,12 @@ class Betreuungsschluessel(models.Model):
 
 
 class MitarbeiterBetreuungsschluessel(models.Model):
-    position = models.ForeignKey(Position, on_delete=models.SET_NULL, null=True, blank=True)
+    position = models.ForeignKey(Position, on_delete=models.PROTECT, null=True, blank=True)
     anteil_stunden_pro_woche = models.FloatField()
     kommentar = models.TextField(blank=True, null=True)
-    mitarbeiter = models.ForeignKey(Mitarbeiter, on_delete=models.SET_NULL, null=True, blank=True, related_name='betreuungsschluessel_zuweisungen')
-    schluessel = models.ForeignKey(Betreuungsschluessel, on_delete=models.SET_NULL, null=True, blank=True, related_name='mitarbeiter_zuweisungen')
-    auftrag = models.ForeignKey(Auftrag, on_delete=models.SET_NULL, null=True, blank=True, related_name='mitarbeiter_betreuungsschluessel')
+    mitarbeiter = models.ForeignKey(Mitarbeiter, on_delete=models.PROTECT, null=True, blank=True, related_name='betreuungsschluessel_zuweisungen')
+    schluessel = models.ForeignKey(Betreuungsschluessel, on_delete=models.PROTECT, null=True, blank=True, related_name='mitarbeiter_zuweisungen')
+    auftrag = models.ForeignKey(Auftrag, on_delete=models.PROTECT, null=True, blank=True, related_name='mitarbeiter_betreuungsschluessel')
 
     def __str__(self):
         return f"{self.mitarbeiter} - {self.schluessel}"
@@ -188,16 +204,27 @@ class VollzeitaequivalentStunden(models.Model):
 
 
 class VZABerechnen:
-    #@staticmethod
-    #def berechne_aktuell_klienten(auftrag):
-     #   if auftrag:
-      #      return MitarbeiterBetreuungsschluessel.objects.filter(auftrag=auftrag).count()
-       # return 0
 
     @staticmethod
-    def berechne_abgedeckte_vza(schluessel_id):
-        total_stunden = MitarbeiterBetreuungsschluessel.objects.filter(schluessel_id=schluessel_id).aggregate(
-            total=models.Sum('anteil_stunden_pro_woche'))['total']
+    def berechne_abgedeckte_vza(schluessel):
+        # Hole den zugehörigen Personaleinsatzplan
+        personaleinsatzplan = schluessel.auftrag.personaleinsatzplan
+
+        # Filtere die relevanten Personaleinsatzpläne
+        relevante_personaleinsatzplaene = Personaleinsatzplan.objects.filter(
+            gueltigkeit_monat=personaleinsatzplan.gueltigkeit_monat,
+            gueltigkeit_jahr=personaleinsatzplan.gueltigkeit_jahr
+        )
+
+        relevante_betreuungsschluessel = Betreuungsschluessel.objects.filter(
+            auftrag__personaleinsatzplan__in=relevante_personaleinsatzplaene
+        )
+
+        # Berechne die abgedeckten VZA nur für relevante Betreuungsschlüssel
+        total_stunden = MitarbeiterBetreuungsschluessel.objects.filter(
+            schluessel__in=relevante_betreuungsschluessel
+        ).aggregate(total=Sum('anteil_stunden_pro_woche'))['total']
+
         vza_wert = VollzeitaequivalentStunden.objects.first().wert if VollzeitaequivalentStunden.objects.exists() else 1
         return (total_stunden / vza_wert) if total_stunden else 0
 
@@ -233,42 +260,37 @@ class VZABerechnen:
 
     @classmethod
     def aktualisiere_abgedeckte_vza(cls, schluessel):
-        schluessel.abgedeckte_VZA = round(cls.berechne_abgedeckte_vza(schluessel.id), 1)
+        schluessel.abgedeckte_VZA = round(cls.berechne_abgedeckte_vza(schluessel), 1)
         schluessel.save()
 
     @classmethod
     def aktualisiere_benoetigte_vza_max(cls, schluessel):
-        schluessel.benoetigte_VZA_max = cls.berechne_benoetigte_vza_max(schluessel)
+        schluessel.benoetigte_VZA_max = round(cls.berechne_benoetigte_vza_max(schluessel), 1)
         schluessel.save()
 
     @classmethod
     def aktualisiere_benoetigte_vza_mindest(cls, schluessel):
-        schluessel.benoetigte_VZA_mindest = cls.berechne_benoetigte_vza_mindest(schluessel)
+        schluessel.benoetigte_VZA_mindest = round(cls.berechne_benoetigte_vza_mindest(schluessel), 1)
         schluessel.save()
 
     @classmethod
     def aktualisiere_benoetigte_vza_aktuell(cls, schluessel):
-        schluessel.benoetigte_VZA_aktuell = cls.berechne_benoetigte_vza_aktuell(schluessel)
+        schluessel.benoetigte_VZA_aktuell = round(cls.berechne_benoetigte_vza_aktuell(schluessel), 1)
         schluessel.save()
-
-    #@classmethod
-    #def aktualisiere_aktuell_klienten(cls, auftrag):
-     #   auftrag.aktuell_klienten = cls.berechne_aktuell_klienten(auftrag)
-     #   auftrag.save()
 
     @classmethod
     def aktualisiere_differenz_vza_max(cls, schluessel):
-        schluessel.differenz_VZA_max = cls.berechne_differenz_vza_max(schluessel)
+        schluessel.differenz_VZA_max = round(cls.berechne_differenz_vza_max(schluessel), 1)
         schluessel.save()
 
     @classmethod
     def aktualisiere_differenz_vza_mindest(cls, schluessel):
-        schluessel.differenz_VZA_mindest = cls.berechne_differenz_vza_mindest(schluessel)
+        schluessel.differenz_VZA_mindest = round(cls.berechne_differenz_vza_mindest(schluessel), 1)
         schluessel.save()
 
     @classmethod
     def aktualisiere_differenz_vza_aktuell(cls, schluessel):
-        schluessel.differenz_VZA_aktuell = cls.berechne_differenz_vza_aktuell(schluessel)
+        schluessel.differenz_VZA_aktuell = round(cls.berechne_differenz_vza_aktuell(schluessel), 1)
         schluessel.save()
 
     @classmethod
@@ -280,9 +302,6 @@ class VZABerechnen:
         cls.aktualisiere_differenz_vza_max(schluessel)
         cls.aktualisiere_differenz_vza_mindest(schluessel)
         cls.aktualisiere_differenz_vza_aktuell(schluessel)
-        #if schluessel.auftrag:
-            #cls.aktualisiere_aktuell_klienten(schluessel.auftrag)
-
 
 @receiver(post_save, sender=MitarbeiterBetreuungsschluessel)
 @receiver(post_delete, sender=MitarbeiterBetreuungsschluessel)
@@ -296,11 +315,6 @@ def auftrag_geaendert_handler(sender, instance, **kwargs):
         VZABerechnen.mitarbeiter_geaendert(schluessel)
 
 
-from django.db.models import Sum
-from django.db.models.signals import post_save, post_delete
-from django.dispatch import receiver
-from .models import Mitarbeiter, MitarbeiterBetreuungsschluessel
-
 
 class MitarbeiterBerechnungen:
     @staticmethod
@@ -313,15 +327,12 @@ class MitarbeiterBerechnungen:
 
     @staticmethod
     def berechne_differenz_max_arbeitszeit(mitarbeiter):
-
         gesamt_stunden = MitarbeiterBerechnungen.berechne_gesamt_stunden_pro_woche(mitarbeiter)
         differenz = mitarbeiter.max_woechentliche_arbeitszeit - gesamt_stunden
-
         return differenz
 
     @staticmethod
     def mitarbeiter_label_with_differenz(mitarbeiter):
-
         differenz = MitarbeiterBerechnungen.berechne_differenz_max_arbeitszeit(mitarbeiter)
         return f"{mitarbeiter.vorname} {mitarbeiter.nachname} (Verfügbare Stunden: {differenz:.1f})"
 
@@ -329,6 +340,5 @@ class MitarbeiterBerechnungen:
 @receiver(post_save, sender=MitarbeiterBetreuungsschluessel)
 @receiver(post_delete, sender=MitarbeiterBetreuungsschluessel)
 def mitarbeiter_betreuungsschluessel_geaendert_handler(sender, instance, **kwargs):
-
     if instance.mitarbeiter:
         MitarbeiterBerechnungen.berechne_differenz_max_arbeitszeit(instance.mitarbeiter)

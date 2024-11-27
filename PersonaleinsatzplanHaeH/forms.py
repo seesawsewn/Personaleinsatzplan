@@ -5,9 +5,18 @@ from .models import (Auftrag, Personaleinsatzplan, Betreuungsschluessel, Mitarbe
 
 # Formular zum Erstellen und Bearbeiten eines Personaleinsatzplans
 class PersonaleinsatzplanForm(forms.ModelForm):
+    MONATS_CHOICES = [
+        (1, 'Januar'), (2, 'Februar'), (3, 'März'), (4, 'April'),
+        (5, 'Mai'), (6, 'Juni'), (7, 'Juli'), (8, 'August'),
+        (9, 'September'), (10, 'Oktober'), (11, 'November'), (12, 'Dezember')
+    ]
+
+    gueltigkeit_monat = forms.ChoiceField(choices=MONATS_CHOICES, label="Monat")
+    gueltigkeit_jahr = forms.IntegerField(label="Jahr", min_value=1900, max_value=2100, widget=forms.NumberInput(attrs={'placeholder': 'Jahr'}))
+
     class Meta:
         model = Personaleinsatzplan
-        fields = ['name', 'startdatum', 'enddatum', 'kostentraeger', 'ersteller', 'version', 'status']
+        fields = ['name', 'gueltigkeit_monat', 'gueltigkeit_jahr', 'kostentraeger', 'ersteller', 'version', 'status', 'niederlassung']
 
 # Formular zum Erstellen und Bearbeiten eines Auftrags
 class AuftragForm(forms.ModelForm):
@@ -30,13 +39,16 @@ class MitarbeiterForm(forms.ModelForm):
         model = Mitarbeiter
         fields = ['vorname', 'nachname', 'qualifikation', 'max_woechentliche_arbeitszeit', 'personalnummer', 'geburtsdatum', 'vertragsbeginn', 'vertragsendeBefristet', 'unbefristet', 'niederlassung']
 
-# Kann gelöscht werden
 class MitarbeiterBetreuungsschluesselForm(forms.ModelForm):
     class Meta:
         model = MitarbeiterBetreuungsschluessel
-        fields = ['position', 'anteil_stunden_pro_woche', 'kommentar', 'mitarbeiter', 'schluessel', 'auftrag']
+        fields = ['mitarbeiter', 'anteil_stunden_pro_woche', 'kommentar', 'position', 'schluessel', 'auftrag']
+        widgets = {
+            'position': forms.HiddenInput(),
+            'schluessel': forms.HiddenInput(),
+            'auftrag': forms.HiddenInput(),
+        }
 
-# Formular zum Erstellen und Bearbeiten einer Niederlassung
 class NiederlassungForm(forms.ModelForm):
     class Meta:
         model = Niederlassung
@@ -60,7 +72,7 @@ class VollzeitaequivalentStundenForm(forms.ModelForm):
         model = VollzeitaequivalentStunden
         fields = ['wert']
 
-# Formular  Zuweisung von Mitarbeitern zu einem Betreuungsschlüssel
+# Formular zur Zuweisung von Mitarbeitern zu einem Betreuungsschlüssel
 class MitarbeiterZuweisungForm(forms.ModelForm):
     class Meta:
         model = MitarbeiterBetreuungsschluessel

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<h1>Willkommen zur Personaleinsatzplanverwaltung</h1>
+
+<h2>Niederlassungen</h2>
+
+<ul>
+    {% for niederlassung in niederlassungen %}
+    <li>
+        <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_niederlassung' niederlassung.pk %}?next={% url 'PersonaleinsatzplanHaeH:startseite' %}">
+            {{ niederlassung.name }}
+        </a>
+
+    
+    </li>
+    {% endfor %}
+</ul>
+
+<a href="{% url 'PersonaleinsatzplanHaeH:betreuungsschluessel_list' %}?next={{ request.path }}">
+    Zur Liste aller Betreuungsschlüssel
+</a>
+
+<a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_list' %}?next={{ request.path }}">
+    Zur Liste aller Mitarbeiter
+</a>
+
+
+
+
+<li>
+    <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_list' %}?next={{ request.path }}">
+        Zur Liste aller Aufträge
+    </a>
+</li>
+
+</body>
+</html>

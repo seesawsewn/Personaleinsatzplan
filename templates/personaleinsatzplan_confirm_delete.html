@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Personaleinsatzplan löschen</title>
 </head>
 <body>
 <!-- personaleinsatzplan_confirm_delete.html -->
@@ -11,8 +11,13 @@
 
 <form method="post">
     {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.GET.next }}">
     <button type="submit">Ja, löschen</button>
-    <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_detail' personaleinsatzplan.pk %}">Abbrechen</a>
+    {% if request.GET.next %}
+        <a href="{{ request.GET.next }}">Abbrechen</a>
+    {% else %}
+        <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_list' %}">Abbrechen</a>
+    {% endif %}
 </form>
 
 </body>

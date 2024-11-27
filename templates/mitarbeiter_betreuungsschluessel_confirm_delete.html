@@ -1,17 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Mitarbeiter-Betreuungsschlüssel-Zuordnung löschen</title>
 </head>
 <body>
 <h1>Mitarbeiter-Betreuungsschlüssel-Zuordnung löschen</h1>
 <p>Möchten Sie die Zuordnung "{{ mitarbeiterbetreuungsschluessel }}" wirklich löschen?</p>
+
 <form method="post">
     {% csrf_token %}
     <button type="submit">Ja, löschen</button>
-    <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_betreuungsschluessel_detail' mitarbeiterbetreuungsschluessel.pk %}">Abbrechen</a>
+    <!-- Abbrechen-Link -->
+    <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_uebersicht' mitarbeiterbetreuungsschluessel.schluessel.auftrag.personaleinsatzplan.pk %}">
+        Abbrechen
+    </a>
 </form>
-
 </body>
 </html>

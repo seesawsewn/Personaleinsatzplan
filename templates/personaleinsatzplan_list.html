@@ -1,25 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Personaleinsatzpläne einer Niederlassung</title>
 </head>
 <body>
-<!-- personaleinsatzplan_list.html -->
+
 <h1>Personaleinsatzpläne</h1>
 <ul>
     {% for personaleinsatzplan in personaleinsatzplaene %}
     <li>
-        <a href="{{ personaleinsatzplan.get_absolute_url }}">{{ personaleinsatzplan.name }}</a>
-        <a href="{{ personaleinsatzplan.get_update_url }}">Bearbeiten</a>
-        <a href="{{ personaleinsatzplan.get_delete_url }}">Löschen</a>
-        <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_uebersicht' personaleinsatzplan.id %}">Übersicht anzeigen</a>
+    
+        <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_uebersicht' personaleinsatzplan.pk %}?next={{ request.path }}">
+            {{ personaleinsatzplan.name }}
+        </a>
+
+    
+    
     </li>
     </li>
     {% endfor %}
 </ul>
-<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_create' %}">Neuen Personaleinsatzplan erstellen</a>
 
-<a href="{% url 'home' %}">Zurück zur Startseite</a>
+<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_create' %}?niederlassung_id={{ niederlassung.id }}&next={{ request.path }}">
+    Neuen Personaleinsatzplan für diese Niederlassung erstellen
+</a>
+
+<a href="{% url 'PersonaleinsatzplanHaeH:niederlassung_personaleinsatzplaene_pdf' niederlassung.id %}">
+    Personaleinsatzpläne als PDF herunterladen
+</a>
+
+
+
+
+
+
+
+<a href="{{ zurueck_link }}">Zurück</a>
+
+
+
+
 </body>
 </html>

@@ -1,16 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Neuen Personaleinsatzplan erstellen</title>
 </head>
 <body>
-<h1>Personaleinsatzplan erstellen</h1>
+
+<h1>Neuen Personaleinsatzplan erstellen</h1>
+
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
+    <input type="hidden" name="next" value="{{ request.GET.next }}">
     <button type="submit">Speichern</button>
 </form>
-<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_list' %}">Zurück zur Übersicht der Personaleinsatzpläne</a>
+
+<!-- Zurück-Link -->
+<a href="{{ request.GET.next }}">Zurück</a>
+
 </body>
 </html>
