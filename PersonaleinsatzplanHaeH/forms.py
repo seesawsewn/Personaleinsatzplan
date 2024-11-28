@@ -1,7 +1,8 @@
 from django import forms
+from django.db.models import Sum
 from .models import (Auftrag, Personaleinsatzplan, Betreuungsschluessel, Mitarbeiter, Niederlassung, Position,
-                     PersonaleinsatzplanStatus, MitarbeiterBetreuungsschluessel, VollzeitaequivalentStunden,
-                     MitarbeiterBerechnungen)
+                     PersonaleinsatzplanStatus, MitarbeiterBetreuungsschluessel, VollzeitaequivalentStunden)
+
 
 # Formular zum Erstellen und Bearbeiten eines Personaleinsatzplans
 class PersonaleinsatzplanForm(forms.ModelForm):
@@ -40,6 +41,9 @@ class MitarbeiterForm(forms.ModelForm):
         fields = ['vorname', 'nachname', 'qualifikation', 'max_woechentliche_arbeitszeit', 'personalnummer', 'geburtsdatum', 'vertragsbeginn', 'vertragsendeBefristet', 'unbefristet', 'niederlassung']
 
 class MitarbeiterBetreuungsschluesselForm(forms.ModelForm):
+    total_hours = forms.FloatField(disabled=True, label="Zugewiesene Stunden", required=False)
+    freie_stunden = forms.FloatField(disabled=True, label="Freie Stunden", required=False)
+
     class Meta:
         model = MitarbeiterBetreuungsschluessel
         fields = ['mitarbeiter', 'anteil_stunden_pro_woche', 'kommentar', 'position', 'schluessel', 'auftrag']
@@ -48,6 +52,13 @@ class MitarbeiterBetreuungsschluesselForm(forms.ModelForm):
             'schluessel': forms.HiddenInput(),
             'auftrag': forms.HiddenInput(),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.mitarbeiter:
+            self.fields['total_hours'].initial = self.instance.total_hours
+            self.fields['freie_stunden'].initial = self.instance.freie_stunden
+
 
 class NiederlassungForm(forms.ModelForm):
     class Meta:
@@ -83,11 +94,20 @@ class MitarbeiterZuweisungForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if self.schluessel:
-            zugewiesene_mitarbeiter = MitarbeiterBetreuungsschluessel.objects.filter(
-                schluessel=self.schluessel).values_list('mitarbeiter', flat=True)
-            self.fields['mitarbeiter'].queryset = Mitarbeiter.objects.exclude(id__in=zugewiesene_mitarbeiter)
 
-            self.fields['mitarbeiter'].label_from_instance = lambda obj: MitarbeiterBerechnungen.mitarbeiter_label_with_differenz(obj)
+            # Mitarbeiter mit noch verfügbaren freien Stunden
+            zugewiesene_stunden = MitarbeiterBetreuungsschluessel.objects.values('mitarbeiter').annotate(
+                total=Sum('zugewiesene_stunden')
+            )
+            freie_mitarbeiter_ids = [
+                mitarbeiter['mitarbeiter'] for mitarbeiter in zugewiesene_stunden
+                if mitarbeiter['total'] < Mitarbeiter.objects.get(
+                    id=mitarbeiter['mitarbeiter']).max_woechentliche_arbeitszeit
+            ]
+            self.fields['mitarbeiter'].queryset = Mitarbeiter.objects.filter(id__in=freie_mitarbeiter_ids)
+
+            self.fields['mitarbeiter'].label_from_instance = lambda obj: f"{obj.vorname} {obj.nachname} (Frei: {obj.max_woechentliche_arbeitszeit - MitarbeiterBetreuungsschluessel.objects.filter(mitarbeiter=obj).aggregate(total=Sum('zugewiesene_stunden'))['total'] or 0})"
+
 
     def save(self, commit=True):
         instance = super().save(commit=False)

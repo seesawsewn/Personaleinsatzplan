@@ -97,6 +97,7 @@
                     <th>Qualifikation</th>
                     <th>Max. wöchentliche Arbeitszeit</th>
                     <th>Anteil Stunden im Projekt</th>
+                    <th>Bereits zugewiesene Stunden</th>
                     <th>Verbleibende Stunden</th>
                     <th>Kommentar</th>
                 </tr>
@@ -112,8 +113,9 @@
                         <td>{{ mitarbeiter.geburtsdatum }}</td>
                         <td>{{ mitarbeiter.qualifikation }}</td>
                         <td>{{ mitarbeiter.max_woechentliche_arbeitszeit }}</td>
-                        <td>{{ mitarbeiter.anteil_stunden_pro_woche|floatformat:2 }}</td>
-                        <td>{{ mitarbeiter.freie_stunden|floatformat:2|default:"Nicht berechnet" }}</td>
+                        <td>{{ mitarbeiter.anteil_stunden_pro_woche }}</td>
+                        <td>{{ mitarbeiter.zugewiesene_stunden }}</td> <!-- Hier wird total_hours angezeigt -->
+                        <td>{{ mitarbeiter.freie_stunden }}</td> <!-- Hier wird free_hours angezeigt -->
                         <td>{{ mitarbeiter.kommentar }}</td>
                         <td>
                             <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_betreuungsschluessel_delete' mitarbeiter.mitarbeiter_betreuungsschluessel_id %}">

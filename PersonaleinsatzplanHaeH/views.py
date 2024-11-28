@@ -1,7 +1,8 @@
+from django.db.models import Sum
 from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView, FormView, TemplateView, View
 from django.urls import reverse_lazy, reverse
 from .models import Auftrag, Personaleinsatzplan, Betreuungsschluessel, Mitarbeiter, Niederlassung, Position, \
-    PersonaleinsatzplanStatus, MitarbeiterBetreuungsschluessel, VollzeitaequivalentStunden, MitarbeiterBerechnungen
+    PersonaleinsatzplanStatus, MitarbeiterBetreuungsschluessel, VollzeitaequivalentStunden
 from django.shortcuts import redirect
 from .forms import MitarbeiterZuweisungForm, MitarbeiterBetreuungsschluesselForm, MitarbeiterForm, \
     BetreuungsschluesselForm
@@ -107,6 +108,7 @@ class PersonaleinsatzplanDetailView(DetailView):
                         'max_woechentliche_arbeitszeit': zuweisung.mitarbeiter.max_woechentliche_arbeitszeit,
                         'anteil_stunden_pro_woche': zuweisung.anteil_stunden_pro_woche,
                         'freie_stunden': zuweisung.freie_stunden,
+                        'zugewiesene_stunden': zuweisung.total_hours,
                         'kommentar': zuweisung.kommentar,
                         'mitarbeiter_betreuungsschluessel_id': zuweisung.id,
                     })
@@ -367,8 +369,14 @@ class MitarbeiterDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         mitarbeiter = self.object
 
-        differenz_stunden = MitarbeiterBerechnungen.berechne_differenz_max_arbeitszeit(mitarbeiter)
-        context['differenz_stunden'] = differenz_stunden
+        betreuungsschluessel_zuweisungen = MitarbeiterBetreuungsschluessel.objects.filter(mitarbeiter=mitarbeiter)
+
+        total_hours = betreuungsschluessel_zuweisungen.aggregate(Sum('zugewiesene_stunden'))[
+                          'zugewiesene_stunden__sum'] or 0
+        free_hours = mitarbeiter.max_woechentliche_arbeitszeit - total_hours
+
+        context['total_hours'] = total_hours
+        context['free_hours'] = free_hours
 
         betreuungsschluessel_zuweisungen = MitarbeiterBetreuungsschluessel.objects.filter(
             mitarbeiter=mitarbeiter).select_related('schluessel', 'auftrag')
@@ -681,6 +689,11 @@ class Personaleinsatzplanuebersicht(DetailView):
 
                 for zuweisung in mitarbeiter_zuweisungen:
                     if zuweisung.mitarbeiter and zuweisung.mitarbeiter.id:
+                        # Berechnung der total_hours und free_hours für jeden Mitarbeiter
+                        berechnung = MitarbeiterBetreuungsschluessel.calculate_hours_and_free_time(
+                            mitarbeiter=zuweisung.mitarbeiter,
+                            personaleinsatzplan=personaleinsatzplan
+                        )
                         mitarbeiter_list.append({
                             'id': zuweisung.mitarbeiter.id,
                             'nachname': zuweisung.mitarbeiter.nachname,
@@ -689,7 +702,8 @@ class Personaleinsatzplanuebersicht(DetailView):
                             'qualifikation': zuweisung.mitarbeiter.qualifikation,
                             'max_woechentliche_arbeitszeit': zuweisung.mitarbeiter.max_woechentliche_arbeitszeit,
                             'anteil_stunden_pro_woche': zuweisung.anteil_stunden_pro_woche,
-                            'differenz': MitarbeiterBerechnungen.berechne_differenz_max_arbeitszeit(zuweisung.mitarbeiter),
+                            'freie_stunden': berechnung['free_hours'],  # Berechnete freie Stunden
+                            'zugewiesene_stunden': berechnung['total_hours'],  # Berechnete Gesamtstunden
                             'kommentar': zuweisung.kommentar,
                             'mitarbeiter_betreuungsschluessel_id': zuweisung.id,
                         })
@@ -723,6 +737,7 @@ class Personaleinsatzplanuebersicht(DetailView):
         context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
 
         return context
+
 
 
 
@@ -766,7 +781,8 @@ class NiederlassungPersonaleinsatzplanuebersicht(DetailView):
                                 'qualifikation': zuweisung.mitarbeiter.qualifikation,
                                 'max_woechentliche_arbeitszeit': zuweisung.mitarbeiter.max_woechentliche_arbeitszeit,
                                 'anteil_stunden_pro_woche': zuweisung.anteil_stunden_pro_woche,
-                                'differenz': MitarbeiterBerechnungen.berechne_differenz_max_arbeitszeit(zuweisung.mitarbeiter),
+                                'freie_stunden': zuweisung.freie_stunden,
+                                'zugewiesene_stunden': zuweisung.total_hours,  # Neues Feld hinzufügen
                                 'kommentar': zuweisung.kommentar,
                                 'mitarbeiter_betreuungsschluessel_id': zuweisung.id,
                             })
