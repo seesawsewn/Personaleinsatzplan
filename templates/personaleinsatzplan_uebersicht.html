@@ -41,20 +41,18 @@
             <td>{{ auftrag_detail.auftrag.vergabenummer }}</td>
             <th>Optionsnummer</th>
             <td>{{ auftrag_detail.auftrag.optionsnummer }}</td>
-        </tr>
-        <tr>
             <th>Maßnahmenummer</th>
             <td>{{ auftrag_detail.auftrag.massnahmenummer }}</td>
+        </tr>
+        <tr>
             <th>Startdatum</th>
             <td>{{ auftrag_detail.auftrag.startdatum }}</td>
-        </tr>
-        <tr>
             <th>Enddatum</th>
             <td>{{ auftrag_detail.auftrag.enddatum }}</td>
-            <th>Maximale Klienten</th>
-            <td>{{ auftrag_detail.auftrag.max_klienten }}</td>
         </tr>
         <tr>
+            <th>Maximale Klienten</th>
+            <td>{{ auftrag_detail.auftrag.max_klienten }}</td>
             <th>Mindest Klienten</th>
             <td>{{ auftrag_detail.auftrag.mindest_klienten }}</td>
             <th>Aktuelle Klienten</th>
@@ -69,16 +67,14 @@
                 <tr>
                     <th>{{ betreuungsschluessel.position }}</th>
                     <th>Klienten pro Betreuer: {{ betreuungsschluessel.klienten_pro_betreuer }}</th>
+                    <td><strong>Abgedeckte VZA:</strong> {{ betreuungsschluessel.abgedeckte_VZA }}</td>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td><strong>Benötigte VZA Max:</strong> {{ betreuungsschluessel.benoetigte_VZA_max }}</td>
                     <td><strong>Benötigte VZA Mindest:</strong> {{ betreuungsschluessel.benoetigte_VZA_mindest }}</td>
-                </tr>
-                <tr>
                     <td><strong>Benötigte VZA Aktuell:</strong> {{ betreuungsschluessel.benoetigte_VZA_aktuell }}</td>
-                    <td><strong>Abgedeckte VZA:</strong> {{ betreuungsschluessel.abgedeckte_VZA }}</td>
                 </tr>
                 <tr>
                     <td><strong>VZA Differenz Max:</strong> {{ betreuungsschluessel.differenz_VZA_max }}</td>
@@ -88,7 +84,7 @@
             </tbody>
         </table>
         
-        <h3>Mitarbeiter:</h3>
+        <h3>Mitarbeiter:in des Auftrags:</h3>
         <table border="1">
             <thead>
                 <tr>

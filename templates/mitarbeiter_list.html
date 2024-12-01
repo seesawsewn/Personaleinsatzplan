@@ -2,25 +2,45 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Mitarbeiter</title>
 </head>
 <body>
-<!-- mitarbeiter_list.html -->
 <h1>Mitarbeiter</h1>
-<ul>
-    {% for mitarbeiter in mitarbeiter %}
-    <li>
-        <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_detail' mitarbeiter.pk %}?next={{ request.path }}">
-            {{ mitarbeiter.vorname }} {{ mitarbeiter.nachname }}
-        </a>
 
-    </li>
-    {% endfor %}
-</ul>
+<!-- Filterformular -->
+<form method="get">
+    <label for="standort_filter">Nach Standort filtern:</label>
+    <select name="niederlassung" id="standort_filter" onchange="this.form.submit()">
+        <option value="">Alle Standorte</option>
+        {% for niederlassung in niederlassungen %}
+        <option value="{{ niederlassung.id }}" {% if request.GET.niederlassung == niederlassung.id|stringformat:"s" %}selected{% endif %}>
+            {{ niederlassung.name }}
+        </option>
+        {% endfor %}
+    </select>
+</form>
+
+<!-- Tabelle mit Mitarbeiterinformationen -->
+<table border="1">
+    <thead>
+        <tr>
+            <th>{{ niederlassung_name }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for mitarbeiter in mitarbeiter %}
+        <tr>
+            <td>
+                <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_detail' mitarbeiter.pk %}?next={{ request.path }}">
+                    {{ mitarbeiter.vorname }} {{ mitarbeiter.nachname }}
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
 <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_create' %}?next={{ request.path }}">Neuen Mitarbeiter erstellen</a>
-
 <a href="{{ zurueck_link }}">Zurück</a>
-
-
 </body>
 </html>

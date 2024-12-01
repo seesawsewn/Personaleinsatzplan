@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (
-    PersonaleinsatzplanCreateView, PersonaleinsatzplanListView, PersonaleinsatzplanDetailView,
+    PersonaleinsatzplanCreateView, PersonaleinsatzplanDetailView,
     PersonaleinsatzplanUpdateView, PersonaleinsatzplanDeleteView,
     AuftragCreateView, AuftragListView, AuftragDetailView, AuftragUpdateView, AuftragDeleteView,
     BetreuungsschluesselCreateView, BetreuungsschluesselListView, BetreuungsschluesselDetailView,
@@ -18,7 +18,7 @@ from .views import (
     MitarbeiterBetreuungsschluesselDeleteView, StartseiteView, PersonaleinsatzplaeneFuerNiederlassungView,
     NiederlassungPersonaleinsatzplanuebersicht, GesamtPersonaleinsatzplanUebersicht,
     Personaleinsatzplanuebersicht,
-    PersonaleinsatzplanOverviewPDFView
+    PersonaleinsatzplanOverviewPDFView, PersonaleinsatzplanDetail2, PersonaleinsatzplanList2View
 )
 
 
@@ -29,14 +29,15 @@ urlpatterns = [
 
     # Personaleinsatzplan URLs
     path('personaleinsatzplan/create/', PersonaleinsatzplanCreateView.as_view(), name='personaleinsatzplan_create'),
-    path('personaleinsatzplan/', PersonaleinsatzplanListView.as_view(), name='personaleinsatzplan_list'),
+    path('personaleinsatzplan/list2/', PersonaleinsatzplanList2View.as_view(), name='personaleinsatzplan_list2'),
     path('personaleinsatzplan/<int:pk>/', PersonaleinsatzplanDetailView.as_view(), name='personaleinsatzplan_detail'),
+    path('personaleinsatzplan/<int:pk>/detail2/', PersonaleinsatzplanDetail2.as_view(), name='personaleinsatzplan_detail2'),
     path('personaleinsatzplan/<int:pk>/update/', PersonaleinsatzplanUpdateView.as_view(), name='personaleinsatzplan_update'),
     path('personaleinsatzplan/<int:pk>/delete/', PersonaleinsatzplanDeleteView.as_view(), name='personaleinsatzplan_delete'),
 
     # Auftrag URLs
     path('auftrag/create/', AuftragCreateView.as_view(), name='auftrag_create'),
-    path('auftrag/', AuftragListView.as_view(), name='auftrag_list'),
+    path('auftrag/list/', AuftragListView.as_view(), name='auftrag_list'),
     path('auftrag/<int:pk>/', AuftragDetailView.as_view(), name='auftrag_detail'),
     path('auftrag/<int:pk>/update/', AuftragUpdateView.as_view(), name='auftrag_update'),
     path('auftrag/<int:pk>/delete/', AuftragDeleteView.as_view(), name='auftrag_delete'),
@@ -50,7 +51,7 @@ urlpatterns = [
 
     # Mitarbeiter URLs
     path('mitarbeiter/create/', MitarbeiterCreateView.as_view(), name='mitarbeiter_create'),
-    path('mitarbeiter/', MitarbeiterListView.as_view(), name='mitarbeiter_list'),
+    path('mitarbeiter/list/', MitarbeiterListView.as_view(), name='mitarbeiter_list'),
     path('mitarbeiter/<int:pk>/', MitarbeiterDetailView.as_view(), name='mitarbeiter_detail'),
     path('mitarbeiter/<int:pk>/update/', MitarbeiterUpdateView.as_view(), name='mitarbeiter_update'),
     path('mitarbeiter/<int:pk>/delete/', MitarbeiterDeleteView.as_view(), name='mitarbeiter_delete'),

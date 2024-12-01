@@ -21,8 +21,8 @@
     {% endfor %}
 </ul>
 
-<a href="{% url 'PersonaleinsatzplanHaeH:betreuungsschluessel_list' %}?next={{ request.path }}">
-    Zur Liste aller Betreuungsschlüssel
+<a href="{% url 'PersonaleinsatzplanHaeH:auftrag_list' %}?next={{ request.path }}">
+    Zur Liste allen Aufträgen
 </a>
 
 <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_list' %}?next={{ request.path }}">
@@ -35,11 +35,11 @@
 </a>
 
 
-<li>
-    <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_list' %}?next={{ request.path }}">
-        Zur Liste aller Aufträge
-    </a>
-</li>
+
+<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_list2' %}?next={{ request.path }}">
+        Zur Liste aller Personaleinsatzpläne
+</a>
+
 
 </body>
 </html>

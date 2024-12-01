@@ -146,13 +146,6 @@ class Betreuungsschluessel(models.Model):
     name = models.CharField(max_length=255)
     position = models.ForeignKey(Position, on_delete=models.PROTECT, null=True, blank=True)
     klienten_pro_betreuer = models.IntegerField()
-    benoetigte_VZA_max = models.FloatField(default=0)
-    benoetigte_VZA_mindest = models.FloatField(default=0)
-    benoetigte_VZA_aktuell = models.FloatField(default=0)
-    abgedeckte_VZA = models.FloatField(default=0, null=True)
-    differenz_VZA_max = models.FloatField(null=True)
-    differenz_VZA_mindest = models.FloatField(null=True)
-    differenz_VZA_aktuell = models.FloatField(null=True)
     auftrag = models.ForeignKey(Auftrag, on_delete=models.CASCADE, related_name='betreuungsschluessel', blank=True, null=True)
 
     def __str__(self):
@@ -166,6 +159,46 @@ class Betreuungsschluessel(models.Model):
 
     def get_delete_url(self):
         return reverse('PersonaleinsatzplanHaeH:betreuungsschluessel_delete', args=[str(self.id)])
+
+    @property
+    def abgedeckte_VZA(self):
+        total_stunden = MitarbeiterBetreuungsschluessel.objects.filter(
+            schluessel=self
+        ).aggregate(total=Sum('anteil_stunden_pro_woche'))['total']
+
+        vza_wert = VollzeitaequivalentStunden.objects.first().wert if VollzeitaequivalentStunden.objects.exists() else 1
+        abgedeckte_vza = (total_stunden / vza_wert) if total_stunden else 0
+        return round(abgedeckte_vza, 1)
+
+    @property
+    def benoetigte_VZA_max(self):
+        if self.auftrag:
+            return self.auftrag.max_klienten / self.klienten_pro_betreuer
+        return 0
+
+    @property
+    def benoetigte_VZA_mindest(self):
+        if self.auftrag:
+            return self.auftrag.mindest_klienten / self.klienten_pro_betreuer
+        return 0
+
+    @property
+    def benoetigte_VZA_aktuell(self):
+        if self.auftrag:
+            return self.auftrag.aktuell_klienten / self.klienten_pro_betreuer
+        return 0
+
+    @property
+    def differenz_VZA_max(self):
+        return round(self.benoetigte_VZA_max - self.abgedeckte_VZA, 1)
+
+    @property
+    def differenz_VZA_mindest(self):
+        return round(self.benoetigte_VZA_mindest - self.abgedeckte_VZA, 1)
+
+    @property
+    def differenz_VZA_aktuell(self):
+        return round(self.benoetigte_VZA_aktuell - self.abgedeckte_VZA, 1)
 
 
 class MitarbeiterBetreuungsschluessel(models.Model):
@@ -191,7 +224,6 @@ class MitarbeiterBetreuungsschluessel(models.Model):
     def get_delete_url(self):
         return reverse('PersonaleinsatzplanHaeH:mitarbeiterbetreuungsschluessel_delete', args=[str(self.id)])
 
-    @staticmethod
     @staticmethod
     def calculate_hours_and_free_time(mitarbeiter, personaleinsatzplan):
         """
@@ -261,125 +293,6 @@ class VollzeitaequivalentStunden(models.Model):
     def get_delete_url(self):
         return reverse('PersonaleinsatzplanHaeH:vollzeitaequivalentstunden_delete', args=[str(self.id)])
 
-
-class VZABerechnen:
-
-    @staticmethod
-    def berechne_abgedeckte_vza(schluessel):
-        # Hole den zugehörigen Personaleinsatzplan
-        personaleinsatzplan = schluessel.auftrag.personaleinsatzplan
-
-        # Filtere die relevanten Personaleinsatzpläne
-        relevante_personaleinsatzplaene = Personaleinsatzplan.objects.filter(
-            gueltigkeit_monat=personaleinsatzplan.gueltigkeit_monat,
-            gueltigkeit_jahr=personaleinsatzplan.gueltigkeit_jahr
-        )
-
-        relevante_betreuungsschluessel = Betreuungsschluessel.objects.filter(
-            auftrag__personaleinsatzplan__in=relevante_personaleinsatzplaene
-        )
-
-        # Berechne die abgedeckten VZA nur für relevante Betreuungsschlüssel
-        total_stunden = MitarbeiterBetreuungsschluessel.objects.filter(
-            schluessel__in=relevante_betreuungsschluessel
-        ).aggregate(total=Sum('anteil_stunden_pro_woche'))['total']
-
-        vza_wert = VollzeitaequivalentStunden.objects.first().wert if VollzeitaequivalentStunden.objects.exists() else 1
-        return (total_stunden / vza_wert) if total_stunden else 0
-
-    @staticmethod
-    def berechne_benoetigte_vza_max(schluessel):
-        if schluessel.auftrag:
-            return schluessel.auftrag.max_klienten / schluessel.klienten_pro_betreuer
-        return 0
-
-    @staticmethod
-    def berechne_benoetigte_vza_mindest(schluessel):
-        if schluessel.auftrag:
-            return schluessel.auftrag.mindest_klienten / schluessel.klienten_pro_betreuer
-        return 0
-
-    @staticmethod
-    def berechne_benoetigte_vza_aktuell(schluessel):
-        if schluessel.auftrag:
-            return schluessel.auftrag.aktuell_klienten / schluessel.klienten_pro_betreuer
-        return 0
-
-    @staticmethod
-    def berechne_differenz_vza_max(schluessel):
-        return schluessel.benoetigte_VZA_max - schluessel.abgedeckte_VZA
-
-    @staticmethod
-    def berechne_differenz_vza_mindest(schluessel):
-        return schluessel.benoetigte_VZA_mindest - schluessel.abgedeckte_VZA
-
-    @staticmethod
-    def berechne_differenz_vza_aktuell(schluessel):
-        return schluessel.benoetigte_VZA_aktuell - schluessel.abgedeckte_VZA
-
-    @classmethod
-    def aktualisiere_abgedeckte_vza(cls, schluessel):
-        schluessel.abgedeckte_VZA = round(cls.berechne_abgedeckte_vza(schluessel), 1)
-        schluessel.save()
-
-    @classmethod
-    def aktualisiere_benoetigte_vza_max(cls, schluessel):
-        schluessel.benoetigte_VZA_max = round(cls.berechne_benoetigte_vza_max(schluessel), 1)
-        schluessel.save()
-
-    @classmethod
-    def aktualisiere_benoetigte_vza_mindest(cls, schluessel):
-        schluessel.benoetigte_VZA_mindest = round(cls.berechne_benoetigte_vza_mindest(schluessel), 1)
-        schluessel.save()
-
-    @classmethod
-    def aktualisiere_benoetigte_vza_aktuell(cls, schluessel):
-        schluessel.benoetigte_VZA_aktuell = round(cls.berechne_benoetigte_vza_aktuell(schluessel), 1)
-        schluessel.save()
-
-    @classmethod
-    def aktualisiere_differenz_vza_max(cls, schluessel):
-        schluessel.differenz_VZA_max = round(cls.berechne_differenz_vza_max(schluessel), 1)
-        schluessel.save()
-
-    @classmethod
-    def aktualisiere_differenz_vza_mindest(cls, schluessel):
-        schluessel.differenz_VZA_mindest = round(cls.berechne_differenz_vza_mindest(schluessel), 1)
-        schluessel.save()
-
-    @classmethod
-    def aktualisiere_differenz_vza_aktuell(cls, schluessel):
-        schluessel.differenz_VZA_aktuell = round(cls.berechne_differenz_vza_aktuell(schluessel), 1)
-        schluessel.save()
-
-    @classmethod
-    def mitarbeiter_geaendert(cls, schluessel):
-        cls.aktualisiere_abgedeckte_vza(schluessel)
-        cls.aktualisiere_benoetigte_vza_max(schluessel)
-        cls.aktualisiere_benoetigte_vza_mindest(schluessel)
-        cls.aktualisiere_benoetigte_vza_aktuell(schluessel)
-        cls.aktualisiere_differenz_vza_max(schluessel)
-        cls.aktualisiere_differenz_vza_mindest(schluessel)
-        cls.aktualisiere_differenz_vza_aktuell(schluessel)
-
-
-
-@receiver(post_save, sender=Auftrag)
-def auftrag_geaendert_handler(sender, instance, **kwargs):
-    for schluessel in instance.betreuungsschluessel.all():
-        VZABerechnen.mitarbeiter_geaendert(schluessel)
-
-
-
-
-
-
-
-
- #   @staticmethod
-  #  def mitarbeiter_label_with_differenz(mitarbeiter):
-   #     differenz = MitarbeiterBerechnungen.berechne_differenz_max_arbeitszeit(mitarbeiter)
-    #    return f"{mitarbeiter.vorname} {mitarbeiter.nachname} (Verfügbare Stunden: {differenz:.1f})"
 
 
 

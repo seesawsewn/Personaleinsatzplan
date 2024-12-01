@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Personaleinsatzpläne</title>
+</head>
+<body>
+<h1>Personaleinsatzpläne</h1>
+
+<!-- Filterformular -->
+<form method="get">
+    <label for="niederlassung_filter">Niederlassung filtern:</label>
+    <select name="niederlassung" id="niederlassung_filter" onchange="this.form.submit()">
+        <option value="">Alle Niederlassungen</option>
+        {% for niederlassung in niederlassungen %}
+        <option value="{{ niederlassung.id }}" {% if request.GET.niederlassung == niederlassung.id|stringformat:"s" %}selected{% endif %}>
+            {{ niederlassung.name }}
+        </option>
+        {% endfor %}
+    </select>
+</form>
+
+<!-- Tabelle mit Personaleinsatzplänen -->
+<table border="1">
+    <thead>
+        <tr>
+            <th>Personaleinsatzplan</th>
+            <th>Gültigkeit</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for plan in personaleinsatzplaene %}
+        <tr>
+            <td>
+                <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_detail' plan.pk %}?next={{ request.path }}">
+                    {{ plan.name }}
+                </a>
+            </td>
+            <td>{{ plan.get_gueltigkeit_monat_display }} {{ plan.gueltigkeit_jahr }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_create' %}?next={{ request.path }}">Neuen Personaleinsatzplan erstellen</a>
+<a href="{{ zurueck_link }}">Zurück</a>
+</body>
+</html>

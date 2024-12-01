@@ -1,19 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-<!-- mitarbeiter_confirm_delete.html -->
-<h1>Mitarbeiter löschen</h1>
-<p>Möchten Sie den Mitarbeiter "{{ mitarbeiter.vorname }} {{ mitarbeiter.nachname }}" wirklich löschen?</p>
+{% if error_message %}
+  <div class="alert alert-danger">
+    <p>{{ error_message }}</p>
+    <ul>
+      {% for auftrag in related_auftraege %}
+        <li>
+          Auftrag: {{ auftrag.name }} 
+          (Vergabenummer: {{ auftrag.vergabenummer }}, Maßnahmenummer: {{ auftrag.massnahmenummer }})
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
 
 <form method="post">
-    {% csrf_token %}
-    <button type="submit">Ja, löschen</button>
-    <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_detail' mitarbeiter.pk %}">Abbrechen</a>
+  {% csrf_token %}
+  <p>Möchten Sie den Mitarbeiter wirklich löschen?</p>
+  <button type="submit" class="btn btn-danger">Löschen</button>
+  <a href="{{ object.get_absolute_url }}" class="btn btn-secondary">Abbrechen</a>
 </form>
-
-</body>
-</html>

@@ -2,17 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Auftrag löschen</title>
 </head>
 <body>
-<!-- auftrag_confirm_delete.html -->
+
+<!-- Fehlerhinweis anzeigen -->
+{% if error_message %}
+    <div class="alert alert-danger">
+        <p>{{ error_message }}</p>
+        {% if related_objects %}
+            <h3>Verknüpfte Objekte:</h3>
+            <ul>
+                {% for obj in related_objects %}
+                    <li>{{ obj }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+{% endif %}
+
 <h1>Auftrag löschen</h1>
-<p>Möchten Sie den Auftrag "{{ auftrag.name }}" wirklich löschen?</p>
+<p>Möchten Sie den Auftrag "{{ object.name }}" wirklich löschen?</p>
 
 <form method="post">
     {% csrf_token %}
+    <input type="hidden" name="next" value="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_list2' %}">
     <button type="submit">Ja, löschen</button>
-    <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_detail' auftrag.pk %}">Abbrechen</a>
+    <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_detail' object.pk %}">Abbrechen</a>
 </form>
 
 </body>

@@ -6,6 +6,22 @@
 </head>
 <body>
 <!-- personaleinsatzplan_confirm_delete.html -->
+
+<!-- Fehlerhinweis anzeigen -->
+{% if error_message %}
+    <div class="alert alert-danger">
+        <p>{{ error_message }}</p>
+        {% if related_objects %}
+            <h3>Referenzierte Objekte:</h3>
+            <ul>
+                {% for obj in related_objects %}
+                    <li>{{ obj }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+{% endif %}
+
 <h1>Personaleinsatzplan löschen</h1>
 <p>Möchten Sie den Personaleinsatzplan "{{ personaleinsatzplan.name }}" wirklich löschen?</p>
 

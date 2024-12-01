@@ -12,6 +12,13 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from .forms import PersonaleinsatzplanForm
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.platypus import Paragraph
+from django.db.models.deletion import ProtectedError
+from django.http import HttpResponseRedirect
+from django.urls import reverse_lazy
+
+
 
 
 
@@ -63,22 +70,33 @@ class PersonaleinsatzplanCreateView(CreateView):
 
 
 # Liste aller Personaleinsatzpläne anzeigen
-class PersonaleinsatzplanListView(ListView):
+class PersonaleinsatzplanList2View(ListView):
     model = Personaleinsatzplan
-    template_name = 'personaleinsatzplan_list.html'
+    template_name = 'personaleinsatzplan_list2.html'
     context_object_name = 'personaleinsatzplaene'
 
+    def get_queryset(self):
+        # Hole alle Personaleinsatzpläne
+        queryset = super().get_queryset()
+
+        # Filter nach Niederlassung, falls im GET-Parameter vorhanden
+        niederlassung_id = self.request.GET.get('niederlassung')
+        if niederlassung_id:
+            queryset = queryset.filter(niederlassung_id=niederlassung_id)
+        return queryset
+
     def get_context_data(self, **kwargs):
-        # Standard-Kontextdaten der ListView übernehmen
         context = super().get_context_data(**kwargs)
-        # Rück-Link zur Startseite hinzufügen
-        context['zurueck_link'] = reverse('startseite')
+        # Füge alle Niederlassungen und den aktuellen Filter zum Kontext hinzu
+        context['niederlassungen'] = Niederlassung.objects.all()
+        context['zurueck_link'] = self.request.GET.get('next', '/')
         return context
+
 
 # Detailansicht eines Personaleinsatzplans
 class PersonaleinsatzplanDetailView(DetailView):
     model = Personaleinsatzplan
-    template_name = 'personaleinsatzplan_detail.html'
+    template_name = 'personaleinsatzplan_detail2.html'
     context_object_name = 'personaleinsatzplan'
 
     def get_context_data(self, **kwargs):
@@ -143,11 +161,30 @@ class PersonaleinsatzplanDetailView(DetailView):
         return context
 
 
+class PersonaleinsatzplanDetail2(DetailView):
+    model = Personaleinsatzplan
+    template_name = 'personaleinsatzplan_detail2.html'
+    context_object_name = 'personaleinsatzplan'
+
+    def get_context_data(self, **kwargs):
+        # Standard-Kontextdaten übernehmen
+        context = super().get_context_data(**kwargs)
+
+        # `next`-Parameter auslesen, Standardwert: Startseite
+        context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
+        return context
+
+        # Aufträge des Personaleinsatzplans in den Kontext hinzufügen
+        context['auftraege'] = self.object.auftraege.all()
+
+        return context
+
+
 
 # Aktualisieren eines Personaleinsatzplans
 class PersonaleinsatzplanUpdateView(UpdateView):
     model = Personaleinsatzplan
-    fields = ['name', 'gueltigkeit', 'kostentraeger', 'ersteller', 'version', 'status', 'niederlassung']
+    fields = ['name', 'gueltigkeit_monat', 'gueltigkeit_jahr', 'kostentraeger', 'ersteller', 'version', 'status', 'niederlassung']
     template_name = 'personaleinsatzplan_form.html'
 
     def get_success_url(self):
@@ -158,10 +195,33 @@ class PersonaleinsatzplanUpdateView(UpdateView):
 
 
 # Löschen eines Personaleinsatzplans
+
 class PersonaleinsatzplanDeleteView(DeleteView):
     model = Personaleinsatzplan
     template_name = 'personaleinsatzplan_confirm_delete.html'
-    success_url = reverse_lazy('PersonaleinsatzplanHaeH:startseite')
+    success_url = reverse_lazy('startseite')
+
+    def post(self, request, *args, **kwargs):
+        """
+        Überschreibe die POST-Methode, um den ProtectedError korrekt abzufangen.
+        """
+        self.object = self.get_object()
+        try:
+            # Versuche, das Objekt zu löschen
+            self.object.delete()
+            return HttpResponseRedirect(self.success_url)
+        except ProtectedError as e:
+            # ProtectedError abfangen und Kontextdaten vorbereiten
+            related_objects = [str(obj) for obj in e.protected_objects]
+            context = self.get_context_data()
+            context['error_message'] = (
+                "Der Personaleinsatzplan kann nicht gelöscht werden, die folgenden Mitarbeiter:innen sind noch zugewiesen."
+            )
+            context['related_objects'] = related_objects
+            return self.render_to_response(context)
+
+
+
 
 
 # Erstellen eines Auftrags
@@ -198,19 +258,34 @@ class AuftragCreateView(CreateView):
 
 
 # Liste aller Aufträge anzeigen
+
+
 class AuftragListView(ListView):
     model = Auftrag
     template_name = 'auftrag_list.html'
     context_object_name = 'auftraege'
 
+    def get_queryset(self):
+        # Hole alle Aufträge
+        queryset = super().get_queryset()
+
+        # Filter nach Niederlassung, falls im GET-Parameter vorhanden
+        niederlassung_id = self.request.GET.get('niederlassung')
+        if niederlassung_id:
+            queryset = queryset.filter(personaleinsatzplan__niederlassung_id=niederlassung_id)
+        return queryset
+
     def get_context_data(self, **kwargs):
-        # Standard-Kontextdaten übernehmen
         context = super().get_context_data(**kwargs)
-        # Rück-Link zur vorherigen Seite oder Standard auf die Startseite setzen
-        context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
+        # Füge alle Niederlassungen und den aktuellen Filter zum Kontext hinzu
+        context['niederlassungen'] = Niederlassung.objects.all()
+        context['zurueck_link'] = self.request.GET.get('next', '/')
         return context
 
+
 # Detailansicht eines Auftrags
+
+
 class AuftragDetailView(DetailView):
     model = Auftrag
     template_name = 'auftrag_detail.html'
@@ -219,9 +294,32 @@ class AuftragDetailView(DetailView):
     def get_context_data(self, **kwargs):
         # Standard-Kontextdaten übernehmen
         context = super().get_context_data(**kwargs)
-        # Rück-Link zur vorherigen Seite oder Standard auf die Startseite setzen
+        betreuungsschluessel_details = []
+
+        # Sammeln der Betreuungsschlüssel und zugewiesenen Mitarbeiter
+        for schluessel in self.object.betreuungsschluessel.all():
+            mitarbeiter_details = []
+            for zuweisung in schluessel.mitarbeiter_zuweisungen.all():
+                mitarbeiter_details.append({
+                    'mitarbeiter': zuweisung.mitarbeiter,
+                    'geburtsdatum': zuweisung.mitarbeiter.geburtsdatum,
+                    'qualifikation': zuweisung.mitarbeiter.qualifikation,
+                    'max_woechentliche_arbeitszeit': zuweisung.mitarbeiter.max_woechentliche_arbeitszeit,
+                    'anteil_stunden_pro_woche': zuweisung.anteil_stunden_pro_woche,
+                    'freie_stunden': zuweisung.freie_stunden,
+                    'zugewiesene_stunden': zuweisung.total_hours,
+                    'kommentar': zuweisung.kommentar,
+                })
+            betreuungsschluessel_details.append({
+                'schluessel': schluessel,
+                'mitarbeiter_details': mitarbeiter_details,
+            })
+
+        # Kontext hinzufügen
+        context['betreuungsschluessel_details'] = betreuungsschluessel_details
         context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
         return context
+
 
 # Aktualisieren eines Auftrags
 class AuftragUpdateView(UpdateView):
@@ -240,9 +338,29 @@ class AuftragDeleteView(DeleteView):
     template_name = 'auftrag_confirm_delete.html'
 
     def get_success_url(self):
-        # Feste Weiterleitung zur Auftrag-Liste nach erfolgreichem Löschen
-        return reverse_lazy('PersonaleinsatzplanHaeH:auftrag_list')
+        # Standard-Redirect zur Auftragsliste
+        return reverse_lazy('PersonaleinsatzplanHaeH:personaleinsatzplan_list2')
 
+    def post(self, request, *args, **kwargs):
+        """
+        Überschreibe die POST-Methode, um den ProtectedError korrekt abzufangen.
+        """
+        self.object = self.get_object()
+        next_url = request.POST.get('next')  # Nimm den 'next'-Parameter aus dem POST-Request
+        try:
+            # Versuche, das Objekt zu löschen
+            self.object.delete()
+            # Weiterleitung basierend auf 'next' oder Standard-URL
+            return HttpResponseRedirect(next_url or self.get_success_url())
+        except ProtectedError as e:
+            # ProtectedError abfangen und Kontextdaten vorbereiten
+            related_objects = [str(obj) for obj in e.protected_objects]
+            context = self.get_context_data()
+            context['error_message'] = (
+                "Der Auftrag kann nicht gelöscht werden, da folgende Objekte noch mit diesem Auftrag verknüpft sind."
+            )
+            context['related_objects'] = related_objects
+            return self.render_to_response(context)
 
 
 # Erstellen eines Betreuungsschlüssels
@@ -267,6 +385,13 @@ class BetreuungsschluesselCreateView(CreateView):
             auftrag = Auftrag.objects.get(pk=auftrag_id)
             initial['auftrag'] = auftrag
         return initial
+
+    def form_valid(self, form):
+        # Name automatisch generieren
+        position = form.cleaned_data['position']
+        form.instance.name = f"{position.bezeichnung}"
+        return super().form_valid(form)
+
 
 
 # Liste aller Betreuungsschlüssel anzeigen
@@ -316,10 +441,36 @@ class BetreuungsschluesselUpdateView(UpdateView):
     success_url = reverse_lazy('PersonaleinsatzplanHaeH:betreuungsschluessel_list')
 
 # Löschen eines Betreuungsschlüssels
+
 class BetreuungsschluesselDeleteView(DeleteView):
     model = Betreuungsschluessel
     template_name = 'betreuungsschluessel_confirm_delete.html'
-    success_url = reverse_lazy('PersonaleinsatzplanHaeH:betreuungsschluessel_list')
+
+    def get_success_url(self):
+        # Weiterleitung zu den Auftragsdetails
+        auftrag = self.object.auftrag
+        return reverse('PersonaleinsatzplanHaeH:auftrag_detail', kwargs={'pk': auftrag.pk})
+
+    def post(self, request, *args, **kwargs):
+        """
+        Überschreibe die POST-Methode, um den ProtectedError korrekt abzufangen.
+        """
+        self.object = self.get_object()
+        try:
+            # Versuche, das Objekt zu löschen
+            self.object.delete()
+            return HttpResponseRedirect(self.get_success_url())
+        except ProtectedError as e:
+            # ProtectedError abfangen und Kontextdaten vorbereiten
+            related_objects = [str(obj) for obj in e.protected_objects]
+            context = self.get_context_data()
+            context['error_message'] = (
+                "Der Betreuungsschlüssel kann nicht gelöscht werden, da noch Mitarbeiter:innen oder andere Objekte zugewiesen sind."
+            )
+            context['related_objects'] = related_objects
+            return self.render_to_response(context)
+
+
 
 # Erstellen eines Mitarbeiters
 class MitarbeiterCreateView(CreateView):
@@ -346,17 +497,37 @@ class MitarbeiterCreateView(CreateView):
 
 
 # Liste aller Mitarbeiter anzeigen
+
 class MitarbeiterListView(ListView):
     model = Mitarbeiter
     template_name = 'mitarbeiter_list.html'
     context_object_name = 'mitarbeiter'
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # Filterung nach Niederlassung
+        niederlassung_id = self.request.GET.get('niederlassung')
+        if niederlassung_id:
+            queryset = queryset.filter(niederlassung_id=niederlassung_id)
+        return queryset
+
     def get_context_data(self, **kwargs):
-        # Standard-Kontextdaten übernehmen
         context = super().get_context_data(**kwargs)
-        # Rück-Link zur vorherigen Seite oder Standard auf die Startseite setzen
-        context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
+        # Alle Niederlassungen für den Filter
+        context['niederlassungen'] = Niederlassung.objects.all()
+
+        # Name der ausgewählten Niederlassung oder Standardwert
+        niederlassung_id = self.request.GET.get('niederlassung')
+        if niederlassung_id:
+            niederlassung = Niederlassung.objects.filter(id=niederlassung_id).first()
+            context['niederlassung_name'] = niederlassung.name if niederlassung else "Alle Standorte"
+        else:
+            context['niederlassung_name'] = "Alle Standorte"
+
+        context['zurueck_link'] = self.request.GET.get('next', '/')
         return context
+
+
 
 
 # Detailansicht eines Mitarbeiters
@@ -407,7 +578,43 @@ class MitarbeiterUpdateView(UpdateView):
 class MitarbeiterDeleteView(DeleteView):
     model = Mitarbeiter
     template_name = 'mitarbeiter_confirm_delete.html'
-    success_url = reverse_lazy('PersonaleinsatzplanHaeH:mitarbeiter_list')
+
+    def get_success_url(self):
+        # Weiterleitung zur Liste aller Mitarbeiter nach erfolgreichem Löschen
+        return reverse_lazy('PersonaleinsatzplanHaeH:mitarbeiter_list')
+
+    def post(self, request, *args, **kwargs):
+        """
+        Überschreibe die POST-Methode, um den ProtectedError korrekt abzufangen.
+        """
+        self.object = self.get_object()
+        try:
+            # Versuche, den Mitarbeiter zu löschen
+            self.object.delete()
+            return HttpResponseRedirect(self.get_success_url())
+        except ProtectedError as e:
+            # ProtectedError abfangen und den zugehörigen Auftrag ermitteln
+            related_objects = e.protected_objects
+
+            # Extrahiere alle zugehörigen Aufträge
+            auftraege = set()
+            for obj in related_objects:
+                if isinstance(obj, MitarbeiterBetreuungsschluessel):
+                    betreuungsschluessel = obj.schluessel
+                    if betreuungsschluessel and betreuungsschluessel.auftrag:
+                        auftraege.add(betreuungsschluessel.auftrag)
+
+            context = self.get_context_data()
+            context['error_message'] = (
+                "Der Mitarbeiter kann nicht gelöscht werden, da er einem oder mehreren Aufträgen "
+                "zugeordnet ist."
+            )
+            context['related_auftraege'] = list(auftraege)
+            return self.render_to_response(context)
+
+
+
+
 
 
 class MitarbeiterBetreuungsschluesselCreateView(CreateView):
@@ -909,8 +1116,6 @@ class GesamtPersonaleinsatzplanUebersicht(ListView):
 # Ausgabe einer Personaleinsatzplanübersicht als PDF Bericht
 
 
-
-
 class PersonaleinsatzplanOverviewPDFView(View):
     def get(self, request, pk=None, niederlassung_pk=None, *args, **kwargs):
         # HTTP-Antwort vorbereiten, die als PDF zurückgegeben wird
@@ -980,7 +1185,7 @@ class PersonaleinsatzplanOverviewPDFView(View):
         return response
 
     def create_title(self, text):
-        title_table = Table([[text]], colWidths=[450])  # Tabelle mit einem Titel erstellen
+        title_table = Table([[text]], colWidths=[500])  # Tabelle mit einem Titel erstellen
         title_table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 20),
@@ -991,7 +1196,8 @@ class PersonaleinsatzplanOverviewPDFView(View):
 
     def create_personaleinsatzplan_table(self, plan):
         data = [
-            ['Gültigkeit', plan.gueltigkeit],
+            ['Personaleinsatzplan', plan.name],
+            ['Gültigkeit', f"{plan.get_gueltigkeit_monat_display()} {plan.gueltigkeit_jahr}"],
             ['Kostenträger', plan.kostentraeger],
             ['Ersteller', plan.ersteller],
             ['Version', plan.version],
@@ -1010,76 +1216,93 @@ class PersonaleinsatzplanOverviewPDFView(View):
         return table
 
     def add_auftraege(self, auftraege, elements):
+        # Stil für Zellen mit Zeilenumbruch
+        cell_style = ParagraphStyle(name='CellStyle', fontName='Helvetica', fontSize=10, leading=12)
+
         for auftrag in auftraege:
+            # Datenstruktur erstellen und Text umwandeln
             data_auftrag = [
-                ['Auftrag', auftrag.name],
-                ['Vergabenummer', auftrag.vergabenummer],
-                ['Optionsnummer', auftrag.optionsnummer],
-                ['Maßnahmenummer', auftrag.massnahmenummer],
-                ['Startdatum', auftrag.startdatum],
-                ['Enddatum', auftrag.enddatum],
-                ['Maximale Klienten', auftrag.max_klienten],
-                ['Mindest Klienten', auftrag.mindest_klienten],
-                ['Aktuelle Klienten', auftrag.aktuell_klienten]
+                ['Auftrag', Paragraph(auftrag.name, cell_style), 'Vergabenummer', auftrag.vergabenummer],
+                ['Optionsnummer', auftrag.optionsnummer, 'Maßnahmenummer', auftrag.massnahmenummer],
+                ['Startdatum', auftrag.startdatum, 'Enddatum', auftrag.enddatum],
+                ['Maximale Klienten', auftrag.max_klienten, 'Mindest Klienten', auftrag.mindest_klienten],
+                ['Aktuelle Klienten', auftrag.aktuell_klienten, '', '']
             ]
 
-            auftrag_table = Table(data_auftrag, colWidths=[150, 350])
+            # Tabelle mit festen Spaltenbreiten erstellen
+            auftrag_table = Table(data_auftrag, colWidths=[125, 125, 125, 125])
+
+            # Tabellenstil festlegen
             auftrag_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, -1), 11),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),  # Kopfzeile
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),  # Links ausgerichtet
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Schriftart
+                ('FONTSIZE', (0, 0), (-1, -1), 10),  # Standard-Schriftgröße
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Rahmen
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 8),  # Abstand
             ]))
+
+            # Tabelle den Elementen hinzufügen
             elements.append(auftrag_table)
-            elements.append(Table([[' ']]))  # Leerraum zwischen Tabellen
+            elements.append(Table([[' ']]))  # Leerraum
 
             # Betreuungsschlüssel hinzufügen
+            cell_style = ParagraphStyle(name='CellStyle', fontName='Helvetica', fontSize=10, leading=12)
+
             for schluessel in auftrag.betreuungsschluessel.all():
                 data_schluessel = [
-                    ['Betreuungsschlüssel', schluessel.position],
-                    ['Klienten pro Betreuer', schluessel.klienten_pro_betreuer],
-                    ['Benötigte VZA Max', schluessel.benoetigte_VZA_max],
-                    ['Benötigte VZA Mindest', schluessel.benoetigte_VZA_mindest],
-                    ['Benötigte VZA Aktuell', schluessel.benoetigte_VZA_aktuell],
-                    ['Abgedeckte VZA', schluessel.abgedeckte_VZA],
-                    ['VZA Differenz Max', schluessel.differenz_VZA_max],
-                    ['VZA Differenz Mindest', schluessel.differenz_VZA_mindest]
+                    ['Betreuungsschlüssel', Paragraph(str(schluessel.position), cell_style), 'Klienten pro Betreuer',
+                     schluessel.klienten_pro_betreuer],
+                    ['Benötigte VZA Max', schluessel.benoetigte_VZA_max, 'Benötigte VZA Mindest',
+                     schluessel.benoetigte_VZA_mindest],
+                    ['Benötigte VZA Aktuell', schluessel.benoetigte_VZA_aktuell, 'Abgedeckte VZA',
+                     schluessel.abgedeckte_VZA],
+                    ['VZA Differenz Max', schluessel.differenz_VZA_max, 'VZA Differenz Mindest',
+                     schluessel.differenz_VZA_mindest],
                 ]
 
-                schluessel_table = Table(data_schluessel, colWidths=[150, 350])
+                # Tabelle mit festen Spaltenbreiten erstellen
+                schluessel_table = Table(data_schluessel, colWidths=[125, 125, 125, 125])
+
+                # Tabellenstil festlegen
                 schluessel_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-                    ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, -1), 11),
-                    ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                    ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),  # Kopfzeile
+                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),  # Links ausgerichtet
+                    ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),  # Schriftart
+                    ('FONTSIZE', (0, 0), (-1, -1), 10),  # Standard-Schriftgröße
+                    ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Rahmen
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 8),  # Abstand
                 ]))
+
+                # Tabelle den Elementen hinzufügen
                 elements.append(schluessel_table)
-                elements.append(Table([[' ']]))  # Leerraum zwischen Tabellen
+                elements.append(Table([[' ']]))  # Leerraum
 
                 # Mitarbeiter hinzufügen
-                data_mitarbeiter = [['Mitarbeiter']]
+                data_mitarbeiter = [
+                    ['Mitarbeiter:in', 'Anteil Stunden', ]]
                 for mitarbeiter in schluessel.mitarbeiter_zuweisungen.all():
+                    # Berechnung der freien und zugewiesenen Stunden
+                    berechnung = MitarbeiterBetreuungsschluessel.calculate_hours_and_free_time(
+                        mitarbeiter=mitarbeiter.mitarbeiter,
+                        personaleinsatzplan=schluessel.auftrag.personaleinsatzplan
+                    )
                     data_mitarbeiter.append([
                         "{} {}".format(mitarbeiter.mitarbeiter.vorname, mitarbeiter.mitarbeiter.nachname),
-                        'Qualifikation: {}'.format(mitarbeiter.mitarbeiter.qualifikation)
+                        mitarbeiter.anteil_stunden_pro_woche,
                     ])
-                mitarbeiter_table = Table(data_mitarbeiter, colWidths=[150, 350])
+
+                mitarbeiter_table = Table(data_mitarbeiter, colWidths=[250, 250])
                 mitarbeiter_table.setStyle(TableStyle([
                     ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-                    ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, -1), 11),
-                    ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                    ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                    ('FONTSIZE', (0, 0), (-1, -1), 10),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
                     ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
                 ]))
                 elements.append(mitarbeiter_table)
                 elements.append(Table([[' ']]))  # Leerraum zwischen Tabellen
-
-
-
-
-
 
 
 # Neue Views für Anwendungsversion

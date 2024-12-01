@@ -32,7 +32,13 @@ class AuftragForm(forms.ModelForm):
 class BetreuungsschluesselForm(forms.ModelForm):
     class Meta:
         model = Betreuungsschluessel
-        fields = ['name', 'position', 'klienten_pro_betreuer', 'auftrag']
+        fields = ['position', 'klienten_pro_betreuer', 'auftrag']  # 'name' entfernt
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['position'].label = "Position"
+        self.fields['auftrag'].label = "Auftrag"
+
 
 # Formular zum Erstellen und Bearbeiten eines Mitarbeiters
 class MitarbeiterForm(forms.ModelForm):
@@ -41,8 +47,6 @@ class MitarbeiterForm(forms.ModelForm):
         fields = ['vorname', 'nachname', 'qualifikation', 'max_woechentliche_arbeitszeit', 'personalnummer', 'geburtsdatum', 'vertragsbeginn', 'vertragsendeBefristet', 'unbefristet', 'niederlassung']
 
 class MitarbeiterBetreuungsschluesselForm(forms.ModelForm):
-    total_hours = forms.FloatField(disabled=True, label="Zugewiesene Stunden", required=False)
-    freie_stunden = forms.FloatField(disabled=True, label="Freie Stunden", required=False)
 
     class Meta:
         model = MitarbeiterBetreuungsschluessel

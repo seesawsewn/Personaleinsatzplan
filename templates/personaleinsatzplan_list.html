@@ -10,13 +10,13 @@
 <ul>
     {% for personaleinsatzplan in personaleinsatzplaene %}
     <li>
-    
+
         <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_uebersicht' personaleinsatzplan.pk %}?next={{ request.path }}">
             {{ personaleinsatzplan.name }}
         </a>
 
-    
-    
+
+
     </li>
     </li>
     {% endfor %}

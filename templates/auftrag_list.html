@@ -2,21 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Aufträge</title>
 </head>
 <body>
-
 <h1>Aufträge</h1>
-<ul>
-    {% for auftrag in auftraege %}
-    <li>
-        <a href="{{ auftrag.get_absolute_url }}">{{ auftrag.name }}</a>
-    </li>
-    {% endfor %}
-</ul>
-<a href="{% url 'PersonaleinsatzplanHaeH:auftrag_create' %}">Neuen Auftrag erstellen</a>
 
+<!-- Filterformular -->
+<form method="get">
+    <label for="standort_filter">Nach Standort filtern:</label>
+    <select name="niederlassung" id="standort_filter" onchange="this.form.submit()">
+        <option value="">Alle Standorte</option>
+        {% for niederlassung in niederlassungen %}
+        <option value="{{ niederlassung.id }}" {% if request.GET.niederlassung == niederlassung.id|stringformat:"s" %}selected{% endif %}>
+            {{ niederlassung.name }}
+        </option>
+        {% endfor %}
+    </select>
+</form>
+
+<!-- Tabelle mit Aufträgen -->
+<table border="1">
+    <thead>
+        <tr>
+            <th>Auftrag</th>
+            <th>Maßnahmenummer</th>
+            <th>Zeitraum</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for auftrag in auftraege %}
+        <tr>
+            <td>
+                <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_detail' auftrag.pk %}?next={{ request.path }}">
+                    {{ auftrag.name }}
+                </a>
+            </td>
+            <td>{{ auftrag.massnahmenummer }}</td>
+            <td>{{ auftrag.startdatum }} - {{ auftrag.enddatum }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'PersonaleinsatzplanHaeH:auftrag_create' %}?next={{ request.path }}">Neuen Auftrag erstellen</a>
 <a href="{{ zurueck_link }}">Zurück</a>
-
 </body>
 </html>
