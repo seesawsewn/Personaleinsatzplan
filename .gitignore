@@ -1,2 +1,22 @@
-# created by virtualenv automatically
-.venv/Lib
+# Virtuelle Umgebung
+.venv/
+
+# PyCharm-spezifisch
+.idea/
+
+# Python-Cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Datenbank
+db.sqlite3
+
+# Statische Dateien (falls du sie nicht manuell hochladen willst)
+staticfiles/
+
+# Migrations (optional)
+*/migrations/
+
+# Lokale Umgebungsdateien
+.env
