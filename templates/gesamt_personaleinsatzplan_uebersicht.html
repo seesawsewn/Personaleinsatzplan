@@ -6,6 +6,10 @@
 </head>
 <body>
 
+<div class="navbar">
+    <a href="{% url 'PersonaleinsatzplanHaeH:logout' %}" class="logout-link">Abmelden</a>
+</div>
+
 <h1>Gesamtübersicht aller Personaleinsatzpläne</h1>
 
 {% for niederlassung_detail in niederlassung_details %}

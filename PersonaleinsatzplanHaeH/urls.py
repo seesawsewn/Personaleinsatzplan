@@ -1,32 +1,27 @@
 from django.urls import path
+from django.contrib.auth import views as auth_views
 from .views import (
     PersonaleinsatzplanCreateView, PersonaleinsatzplanDetailView,
     PersonaleinsatzplanUpdateView, PersonaleinsatzplanDeleteView,
     AuftragCreateView, AuftragListView, AuftragDetailView, AuftragUpdateView, AuftragDeleteView,
-    BetreuungsschluesselCreateView, BetreuungsschluesselListView, BetreuungsschluesselDetailView,
-    BetreuungsschluesselUpdateView, BetreuungsschluesselDeleteView,
+    BetreuungsschluesselCreateView,
+    BetreuungsschluesselDeleteView,
     MitarbeiterCreateView, MitarbeiterListView, MitarbeiterDetailView, MitarbeiterUpdateView, MitarbeiterDeleteView,
-    NiederlassungCreateView, NiederlassungListView, NiederlassungDetailView, NiederlassungUpdateView,
-    NiederlassungDeleteView,
-    PositionCreateView, PositionListView, PositionDetailView, PositionUpdateView, PositionDeleteView,
-    PersonaleinsatzplanStatusCreateView, PersonaleinsatzplanStatusListView, PersonaleinsatzplanStatusDetailView,
-    PersonaleinsatzplanStatusUpdateView, PersonaleinsatzplanStatusDeleteView,
-    VollzeitaequivalentStundenCreateView, VollzeitaequivalentStundenListView, VollzeitaequivalentStundenDetailView,
-    VollzeitaequivalentStundenUpdateView, VollzeitaequivalentStundenDeleteView,
-    MitarbeiterBetreuungsschluesselCreateView, MitarbeiterBetreuungsschluesselListView,
-    MitarbeiterBetreuungsschluesselDetailView, MitarbeiterBetreuungsschluesselUpdateView,
+    MitarbeiterBetreuungsschluesselCreateView,
     MitarbeiterBetreuungsschluesselDeleteView, StartseiteView, PersonaleinsatzplaeneFuerNiederlassungView,
     NiederlassungPersonaleinsatzplanuebersicht, GesamtPersonaleinsatzplanUebersicht,
     Personaleinsatzplanuebersicht,
-    PersonaleinsatzplanOverviewPDFView, PersonaleinsatzplanDetail2, PersonaleinsatzplanList2View
-)
+    PersonaleinsatzplanOverviewPDFView, PersonaleinsatzplanDetail2, PersonaleinsatzplanList2View, custom_logout_view)
+
+
 
 
 app_name = 'PersonaleinsatzplanHaeH'
 urlpatterns = [
 
+    path('custom-login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
+    path('logout/', custom_logout_view, name='logout'),
     path('', StartseiteView.as_view(), name='startseite'),
-
     # Personaleinsatzplan URLs
     path('personaleinsatzplan/create/', PersonaleinsatzplanCreateView.as_view(), name='personaleinsatzplan_create'),
     path('personaleinsatzplan/list2/', PersonaleinsatzplanList2View.as_view(), name='personaleinsatzplan_list2'),
@@ -44,9 +39,6 @@ urlpatterns = [
 
     # Betreuungsschluessel URLs
     path('betreuungsschluessel/create/', BetreuungsschluesselCreateView.as_view(), name='betreuungsschluessel_create'),
-    path('betreuungsschluessel/', BetreuungsschluesselListView.as_view(), name='betreuungsschluessel_list'),
-    path('betreuungsschluessel/<int:pk>/', BetreuungsschluesselDetailView.as_view(), name='betreuungsschluessel_detail'),
-    path('betreuungsschluessel/<int:pk>/update/', BetreuungsschluesselUpdateView.as_view(), name='betreuungsschluessel_update'),
     path('betreuungsschluessel/<int:pk>/delete/', BetreuungsschluesselDeleteView.as_view(), name='betreuungsschluessel_delete'),
 
     # Mitarbeiter URLs
@@ -56,39 +48,9 @@ urlpatterns = [
     path('mitarbeiter/<int:pk>/update/', MitarbeiterUpdateView.as_view(), name='mitarbeiter_update'),
     path('mitarbeiter/<int:pk>/delete/', MitarbeiterDeleteView.as_view(), name='mitarbeiter_delete'),
 
-    # Niederlassung URLs
-    path('niederlassung/create/', NiederlassungCreateView.as_view(), name='niederlassung_create'),
-    path('niederlassung/', NiederlassungListView.as_view(), name='niederlassung_list'),
-    path('niederlassung/<int:pk>/', NiederlassungDetailView.as_view(), name='niederlassung_detail'),
-    path('niederlassung/<int:pk>/update/', NiederlassungUpdateView.as_view(), name='niederlassung_update'),
-    path('niederlassung/<int:pk>/delete/', NiederlassungDeleteView.as_view(), name='niederlassung_delete'),
-
-    # Position URLs
-    path('position/create/', PositionCreateView.as_view(), name='position_create'),
-    path('position/', PositionListView.as_view(), name='position_list'),
-    path('position/<int:pk>/', PositionDetailView.as_view(), name='position_detail'),
-    path('position/<int:pk>/update/', PositionUpdateView.as_view(), name='position_update'),
-    path('position/<int:pk>/delete/', PositionDeleteView.as_view(), name='position_delete'),
-
-    # PersonaleinsatzplanStatus URLs
-    path('personaleinsatzplanstatus/create/', PersonaleinsatzplanStatusCreateView.as_view(), name='personaleinsatzplanstatus_create'),
-    path('personaleinsatzplanstatus/', PersonaleinsatzplanStatusListView.as_view(), name='personaleinsatzplanstatus_list'),
-    path('personaleinsatzplanstatus/<int:pk>/', PersonaleinsatzplanStatusDetailView.as_view(), name='personaleinsatzplanstatus_detail'),
-    path('personaleinsatzplanstatus/<int:pk>/update/', PersonaleinsatzplanStatusUpdateView.as_view(), name='personaleinsatzplanstatus_update'),
-    path('personaleinsatzplanstatus/<int:pk>/delete/', PersonaleinsatzplanStatusDeleteView.as_view(), name='personaleinsatzplanstatus_delete'),
-
-    # VollzeitaequivalentStunden URLs
-    path('vollzeitaequivalentstunden/create/', VollzeitaequivalentStundenCreateView.as_view(), name='vollzeitaequivalentstunden_create'),
-    path('vollzeitaequivalentstunden/', VollzeitaequivalentStundenListView.as_view(), name='vollzeitaequivalentstunden_list'),
-    path('vollzeitaequivalentstunden/<int:pk>/', VollzeitaequivalentStundenDetailView.as_view(), name='vollzeitaequivalentstunden_detail'),
-    path('vollzeitaequivalentstunden/<int:pk>/update/', VollzeitaequivalentStundenUpdateView.as_view(), name='vollzeitaequivalentstunden_update'),
-    path('vollzeitaequivalentstunden/<int:pk>/delete/', VollzeitaequivalentStundenDeleteView.as_view(), name='vollzeitaequivalentstunden_delete'),
 
     # MitarbeiterBetreuungsschluessel URLs
     path('mitarbeiter-betreuungsschluessel/create/<int:schluessel_id>/', MitarbeiterBetreuungsschluesselCreateView.as_view(), name='mitarbeiter_betreuungsschluessel_create'),
-    path('mitarbeiter-betreuungsschluessel/', MitarbeiterBetreuungsschluesselListView.as_view(), name='mitarbeiter_betreuungsschluessel_list'),
-    path('mitarbeiter-betreuungsschluessel/<int:pk>/', MitarbeiterBetreuungsschluesselDetailView.as_view(), name='mitarbeiter_betreuungsschluessel_detail'),
-    path('mitarbeiter-betreuungsschluessel/<int:pk>/update/', MitarbeiterBetreuungsschluesselUpdateView.as_view(), name='mitarbeiter_betreuungsschluessel_update'),
     path('mitarbeiter-betreuungsschluessel/<int:pk>/delete/', MitarbeiterBetreuungsschluesselDeleteView.as_view(), name='mitarbeiter_betreuungsschluessel_delete'),
 
 

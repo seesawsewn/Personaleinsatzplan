@@ -118,10 +118,17 @@ USE_TZ = True
 USE_L10N = False
 
 DATE_INPUT_FORMATS = [
-    '%d-%m-%Y',  # '25-12-2024'
-    '%Y-%m-%d',  # '2024-12-25'
-    '%Y-%m',     # '2024-12'
-    '%m-%Y',     # '12-2024'
+    "%d %B %Y",  # '25 October 2006'
+    "%d %B, %Y",  # '25 October, 2006'
+    "%Y-%m-%d",  # '2006-10-25'
+    "%m/%d/%Y",  # '10/25/2006'
+    "%m/%d/%y",  # '10/25/06'
+    "%b %d %Y",  # 'Oct 25 2006'
+    "%b %d, %Y",  # 'Oct 25, 2006'
+    "%d %b %Y",  # '25 Oct 2006'
+    "%d %b, %Y",  # '25 Oct, 2006'
+    "%B %d %Y",  # 'October 25 2006'
+    "%B %d, %Y",  # 'October 25, 2006'
 ]
 
 
@@ -131,7 +138,26 @@ DATE_INPUT_FORMATS = [
 
 STATIC_URL = 'static/'
 
+STATICFILES_DIRS = [
+    BASE_DIR / "static",  # BASE_DIR verweist auf den Hauptordner des Projekts
+]
+
+# Für die Bereitstellung von statischen Dateien in der Produktion:
+STATIC_ROOT = BASE_DIR / "staticfiles"  # Ordner, in den collectstatic alles kopiert
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGIN_URL = '/custom-login/'
+
+LOGIN_REDIRECT_URL = '/PersonaleinsatzplanHaeH/'
+LOGOUT_REDIRECT_URL = '/login/'  # Weiterleitung zur Login-Seite
+
+
+
+
+
+
+

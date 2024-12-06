@@ -3,25 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <title>Mitarbeiter</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
+<div class="navbar">
+    <a href="{% url 'PersonaleinsatzplanHaeH:logout' %}" class="logout-link">Abmelden</a>
+</div>
+
 <h1>Mitarbeiter</h1>
 
 <!-- Filterformular -->
-<form method="get">
-    <label for="standort_filter">Nach Standort filtern:</label>
-    <select name="niederlassung" id="standort_filter" onchange="this.form.submit()">
-        <option value="">Alle Standorte</option>
-        {% for niederlassung in niederlassungen %}
-        <option value="{{ niederlassung.id }}" {% if request.GET.niederlassung == niederlassung.id|stringformat:"s" %}selected{% endif %}>
-            {{ niederlassung.name }}
-        </option>
-        {% endfor %}
-    </select>
+<form method="get" class="filter-form">
+    <div class="filter-row" style="display: flex; align-items: center; gap: 10px;">
+        <label for="standort_filter">Nach Standort filtern:</label>
+        <select name="niederlassung" id="standort_filter" onchange="this.form.submit()" class="filter-select">
+            <option value="">Alle Standorte</option>
+            {% for niederlassung in niederlassungen %}
+            <option value="{{ niederlassung.id }}" {% if request.GET.niederlassung == niederlassung.id|stringformat:"s" %}selected{% endif %}>
+                {{ niederlassung.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
 </form>
 
+
 <!-- Tabelle mit Mitarbeiterinformationen -->
-<table border="1">
+<table>
     <thead>
         <tr>
             <th>{{ niederlassung_name }}</th>
@@ -31,7 +40,7 @@
         {% for mitarbeiter in mitarbeiter %}
         <tr>
             <td>
-                <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_detail' mitarbeiter.pk %}?next={{ request.path }}">
+                <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_detail' mitarbeiter.pk %}?next={{ request.path }}" class="card-link">
                     {{ mitarbeiter.vorname }} {{ mitarbeiter.nachname }}
                 </a>
             </td>
@@ -40,7 +49,11 @@
     </tbody>
 </table>
 
-<a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_create' %}?next={{ request.path }}">Neuen Mitarbeiter erstellen</a>
-<a href="{{ zurueck_link }}">Zurück</a>
+<div class="actions">
+    <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_create' %}?next={{ request.path }}" class="action-link">
+        Neuen Mitarbeiter erstellen
+    </a>
+    <a href="{{ zurueck_link }}" class="action-link">Zurück</a>
+</div>
 </body>
 </html>

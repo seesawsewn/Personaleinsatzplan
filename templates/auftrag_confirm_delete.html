@@ -2,34 +2,40 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Auftrag löschen</title>
+    <title>Personaleinsatzpläne</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="delete-page">
+
+
+
+<h1 class="page-title">Auftrag löschen</h1>
+<p class="confirmation-message">Möchten Sie den Auftrag "{{ object.name }}" wirklich löschen?</p>
+
+<form method="post" class="delete-form">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_list2' %}">
+    <button type="submit" class="btn btn-danger">Ja, löschen</button>
+    <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_detail' object.pk %}" class="btn btn-secondary">Abbrechen</a>
+</form>
+
 
 <!-- Fehlerhinweis anzeigen -->
 {% if error_message %}
     <div class="alert alert-danger">
         <p>{{ error_message }}</p>
         {% if related_objects %}
-            <h3>Verknüpfte Objekte:</h3>
-            <ul>
-                {% for obj in related_objects %}
-                    <li>{{ obj }}</li>
-                {% endfor %}
-            </ul>
+            <h4>Verknüpfte Objekte:</h4>
+                <ul class="related-objects-list">
+                    {% for obj in related_objects %}
+                        <li>{{ obj }}</li>
+                    {% endfor %}
+                </ul>
         {% endif %}
     </div>
 {% endif %}
-
-<h1>Auftrag löschen</h1>
-<p>Möchten Sie den Auftrag "{{ object.name }}" wirklich löschen?</p>
-
-<form method="post">
-    {% csrf_token %}
-    <input type="hidden" name="next" value="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_list2' %}">
-    <button type="submit">Ja, löschen</button>
-    <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_detail' object.pk %}">Abbrechen</a>
-</form>
 
 </body>
 </html>

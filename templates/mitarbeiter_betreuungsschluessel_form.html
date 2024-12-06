@@ -2,27 +2,33 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mitarbeiter zuweisen</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
-<h1>Mitarbeiter zuweisen</h1>
+    <section class="form-section">
+        <h1>Mitarbeitendenzuweisung</h1>
 
-<!-- Formular zur Zuweisung -->
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <input type="hidden" name="next" value="{{ request.GET.next }}">
-    <button type="submit">Speichern</button>
-</form>
+        <!-- Formular zur Zuweisung -->
+        <form method="post" class="form">
+            <fieldset>
+                <legend>Mitarbeitendenauswahl</legend>
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="hidden" name="next" value="{{ request.GET.next }}">
+            <button type="submit" class="btn">Speichern</button>
+        </fieldset>
+        </form>
 
-<!-- Zurück-Button -->
-
-
-
-<a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_create' %}?next={{ request.GET.next }}">
-    Neuen Mitarbeiter erstellen
-</a>
-
-<a href="{{ request.GET.next }}">Zurück</a>
+        <!-- Optionen -->
+        <div class="link-container">
+            <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_create' %}?next={{ request.GET.next }}" class="action-link">
+                Neuen Mitarbeiter erstellen
+            </a>
+            <a href="{{ request.GET.next }}" class="action-link">Zurück</a>
+        </div>
+    </section>
 </body>
 </html>

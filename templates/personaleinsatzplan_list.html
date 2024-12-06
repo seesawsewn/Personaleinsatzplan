@@ -1,46 +1,73 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
     <title>Personaleinsatzpläne einer Niederlassung</title>
+   {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
+<div class="navbar">
+    <a href="{% url 'PersonaleinsatzplanHaeH:logout' %}" class="logout-link">Abmelden</a>
+</div>
+
 <h1>Personaleinsatzpläne</h1>
-<ul>
+
+<!-- Filterformular -->
+<form method="get" class="filter-form">
+    <div class="filter-row" style="display: flex; align-items: center; gap: 10px;">
+        <label for="jahr_filter">Jahr filtern:</label>
+        <select name="jahr" id="jahr_filter" onchange="this.form.submit()" class="filter-select">
+            <option value="">Alle Jahre</option>
+            {% for jahr in jahre %}
+            <option value="{{ jahr }}" {% if request.GET.jahr == jahr|stringformat:"s" %}selected{% endif %}>
+                {{ jahr }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <label for="status_filter">Status filtern:</label>
+        <select name="status" id="status_filter" onchange="this.form.submit()" class="filter-select">
+            <option value="">Alle Status</option>
+            {% for status_key, status_value in status_choices %}
+            <option value="{{ status_key }}" {% if request.GET.status == status_key|stringformat:"s" %}selected{% endif %}>
+                {{ status_value }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+</form>
+
+{% if personaleinsatzplaene %}
+<div class="card-container">
     {% for personaleinsatzplan in personaleinsatzplaene %}
-    <li>
-
-        <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_uebersicht' personaleinsatzplan.pk %}?next={{ request.path }}">
-            {{ personaleinsatzplan.name }}
-        </a>
-
-
-
-    </li>
-    </li>
+    <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_uebersicht' personaleinsatzplan.pk %}?next={{ request.path }}" class="card-link-wrapper">
+        <div class="card">
+            <h5>{{ personaleinsatzplan.name }}</h5>
+        </div>
+    </a>
     {% endfor %}
-</ul>
+</div>
+{% else %}
+<p class="no-plans-message">
+    Klicke auf "Neuer Personaleinsatzplan", um einen Personaleinsatzplan zu erstellen.
+</p>
+{% endif %}
 
-<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_create' %}?niederlassung_id={{ niederlassung.id }}&next={{ request.path }}">
-    Neuen Personaleinsatzplan für diese Niederlassung erstellen
-</a>
-
-<a href="{% url 'PersonaleinsatzplanHaeH:niederlassung_personaleinsatzplaene_pdf' niederlassung.id %}">
-    Personaleinsatzpläne als PDF herunterladen
-</a>
-
-
-
-
-
-
-
-<a href="{{ zurueck_link }}">Zurück</a>
-
-
-
+<div class="link-container">
+    <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_create' %}?niederlassung_id={{ niederlassung.id }}&next={{ request.path }}" class="action-link">
+        Neuen Personaleinsatzplan erstellen
+    </a>
+    <a href="{% url 'PersonaleinsatzplanHaeH:niederlassung_personaleinsatzplaene_pdf' niederlassung.id %}" class="action-link">
+        Alle Personaleinsatzpläne der Niederlassung drucken
+    </a>
+    <a href="{{ zurueck_link }}" class="action-link">
+        Zurück
+    </a>
+</div>
 
 </body>
 </html>
-

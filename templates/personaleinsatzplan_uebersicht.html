@@ -1,108 +1,132 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <title>Personaleinsatzplanübersicht</title>
 </head>
-<body>
+<body class="personaleinsatzplan-seite">
+
+<div class="navbar">
+    <a href="{% url 'PersonaleinsatzplanHaeH:logout' %}" class="logout-link">Abmelden</a>
+</div>
 
 <h2>{{ personaleinsatzplan.name }}</h2>
 
-<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_update' personaleinsatzplan.pk %}?next={{ request.path }}">
-    Bearbeiten
-</a>
+<div class="actions">
+    <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_update' personaleinsatzplan.pk %}?next={{ request.path }}" class="action-link2">
+        Bearbeiten
+    </a>
+    <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_delete' personaleinsatzplan.pk %}?next={{ request.path }}" class="action-link2">
+        Löschen
+    </a>
+</div>
 
-<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_delete' personaleinsatzplan.pk %}?next={{ request.path }}">Löschen</a>
-
-<table border="1">
-    <tbody>
-        <tr>
-            <td><strong>Gültigkeit:</strong> {{ personaleinsatzplan.get_gueltigkeit_monat_display }} {{ personaleinsatzplan.gueltigkeit_jahr }}</td>
-            <td><strong>Kostenträger:</strong> {{ personaleinsatzplan.kostentraeger }}</td>
-        </tr>
-        <tr>
-            <td><strong>Ersteller:</strong> {{ personaleinsatzplan.ersteller }}</td>
-            <td><strong>Version:</strong> {{ personaleinsatzplan.version }}</td>
-            <td><strong>Status:</strong> {{ personaleinsatzplan.status }}</td>
-        </tr>
-    </tbody>
-</table>
-
-{% for auftrag_detail in auftrag_details %}
-    <h3>
-        <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_detail' auftrag_detail.auftrag.id %}?next={{ request.path }}">
-            {{ auftrag_detail.auftrag.name }}
-        </a>
-    </h3>
-
-    <table border="1">
-        <tr>
-            <th>Vergabenummer</th>
-            <td>{{ auftrag_detail.auftrag.vergabenummer }}</td>
-            <th>Optionsnummer</th>
-            <td>{{ auftrag_detail.auftrag.optionsnummer }}</td>
-            <th>Maßnahmenummer</th>
-            <td>{{ auftrag_detail.auftrag.massnahmenummer }}</td>
-        </tr>
-        <tr>
-            <th>Startdatum</th>
-            <td>{{ auftrag_detail.auftrag.startdatum }}</td>
-            <th>Enddatum</th>
-            <td>{{ auftrag_detail.auftrag.enddatum }}</td>
-        </tr>
-        <tr>
-            <th>Maximale Klienten</th>
-            <td>{{ auftrag_detail.auftrag.max_klienten }}</td>
-            <th>Mindest Klienten</th>
-            <td>{{ auftrag_detail.auftrag.mindest_klienten }}</td>
-            <th>Aktuelle Klienten</th>
-            <td>{{ auftrag_detail.auftrag.aktuell_klienten }}</td>
-        </tr>
+<section>
+    <table>
+        <tbody>
+            <tr>
+                <td><strong>Gültigkeit</strong></td>
+                <td>{{ personaleinsatzplan.get_gueltigkeit_monat_display }} {{ personaleinsatzplan.gueltigkeit_jahr }}</td>
+                <td><strong>Kostenträger</strong></td>
+                <td>{{ personaleinsatzplan.kostentraeger }}</td>
+            </tr>
+            <tr>
+                <td><strong>Ersteller</strong></td>
+                <td>{{ personaleinsatzplan.ersteller }}</td>
+                <td><strong>Status</strong></td>
+                <td>{{ personaleinsatzplan.get_status_display }}</td>
+            </tr>
+        </tbody>
     </table>
-    <br>
+</section>
 
-    {% for betreuungsschluessel in auftrag_detail.betreuungsschluessel %}
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>{{ betreuungsschluessel.position }}</th>
-                    <th>Klienten pro Betreuer: {{ betreuungsschluessel.klienten_pro_betreuer }}</th>
-                    <td><strong>Abgedeckte VZA:</strong> {{ betreuungsschluessel.abgedeckte_VZA }}</td>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>Benötigte VZA Max:</strong> {{ betreuungsschluessel.benoetigte_VZA_max }}</td>
-                    <td><strong>Benötigte VZA Mindest:</strong> {{ betreuungsschluessel.benoetigte_VZA_mindest }}</td>
-                    <td><strong>Benötigte VZA Aktuell:</strong> {{ betreuungsschluessel.benoetigte_VZA_aktuell }}</td>
-                </tr>
-                <tr>
-                    <td><strong>VZA Differenz Max:</strong> {{ betreuungsschluessel.differenz_VZA_max }}</td>
-                    <td><strong>VZA Differenz Mindest:</strong> {{ betreuungsschluessel.differenz_VZA_mindest }}</td>
-                    <td><strong>VZA Differenz Aktuell:</strong> {{ betreuungsschluessel.differenz_VZA_aktuell }}</td>
-                </tr>
-            </tbody>
+{% if auftrag_details %}
+    {% for auftrag_detail in auftrag_details %}
+    <section>
+            <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_detail' auftrag_detail.auftrag.id %}?next={{ request.path }}" class="auftrag-detail-link">
+                {{ auftrag_detail.auftrag.name }}
+            </a>
+
+        <table>
+            <tr>
+                <td><strong>Startdatum</strong></td>
+                <td>{{ auftrag_detail.auftrag.startdatum|date:"d.m.Y" }}</td>
+                <td><strong>Enddatum</strong></td>
+                <td>{{ auftrag_detail.auftrag.enddatum|date:"d.m.Y" }}</td>
+                <td><strong>Aktuelle Teilnehmer:innen</strong></td>
+                <td>{{ auftrag_detail.auftrag.aktuell_klienten}}</td>
+            </tr>
+            <tr>
+                <td><strong>Vergabenummer</strong></td>
+                <td>{{ auftrag_detail.auftrag.vergabenummer }}</td>
+                <td><strong>Optionsnummer</strong></td>
+                <td>{{ auftrag_detail.auftrag.optionsnummer }}</td>
+                <td><strong>Maßnahmenummer</strong></td>
+                <td>{{ auftrag_detail.auftrag.massnahmenummer }}</td>
+            </tr>
         </table>
-        
-        <h3>Mitarbeiter:in des Auftrags:</h3>
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>Nachname, Vorname</th>
-                    <th>Geburtsdatum</th>
-                    <th>Qualifikation</th>
-                    <th>Max. wöchentliche Arbeitszeit</th>
-                    <th>Anteil Stunden im Projekt</th>
-                    <th>Bereits zugewiesene Stunden</th>
-                    <th>Verbleibende Stunden</th>
-                    <th>Kommentar</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for mitarbeiter in betreuungsschluessel.mitarbeiter %}
+
+        {% for betreuungsschluessel in auftrag_detail.betreuungsschluessel %}
+        <section>
+            <h4>Betreuungsschlüssel: {{ betreuungsschluessel.name }}</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Teilnehmer:innen pro Betreuer:in</th>
+                        <th>{{ betreuungsschluessel.klienten_pro_betreuer }}</th>
+                        <th>Derzeit abgedeckte Vollzeitstellen</th>
+                        <th>{{ betreuungsschluessel.abgedeckte_VZA }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Gesamtbedarf an Vollzeitstellen</td>
+                        <td>{{ betreuungsschluessel.benoetigte_VZA_max }}</td>
+                        <td>Mindestbedarf an Vollzeitstellen</td>
+                        <td>{{ betreuungsschluessel.benoetigte_VZA_mindest }}</td>
+                        <td>Benötigte Vollzeitstellen für aktuelle Teilnehmer:innen</td>
+                        <td>{{ betreuungsschluessel.benoetigte_VZA_aktuell }}</td>
+                    </tr>
+                    <tr>
+                        <td>Differenz zum Gesamtbedarf</td>
+                        <td class="{% if betreuungsschluessel.differenz_VZA_max > betreuungsschluessel.benoetigte_VZA_max %}highlight-error{% endif %}">
+                            {{ betreuungsschluessel.differenz_VZA_max }}
+                        </td>
+                        <td>Differenz zum Mindestbedar</td>
+                        <td class="{% if betreuungsschluessel.differenz_VZA_mindest <= betreuungsschluessel.benoetigte_VZA_mindest %}highlight-error{% endif %}">
+                            {{ betreuungsschluessel.differenz_VZA_mindest }}
+                        </td>
+                        <td>Differenz für aktuelle Teilnehmer:innen</td>
+                        <td class="{% if betreuungsschluessel.differenz_VZA_aktuell <= betreuungsschluessel.benoetigte_VZA_aktuell %}highlight-error{% endif %}">
+                            {{ betreuungsschluessel.differenz_VZA_aktuell }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Mitarbeiter:innen des Auftrags:</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nachname, Vorname</th>
+                        <th>Geburtsdatum</th>
+                        <th>Qualifikation</th>
+                        <th>Max. wöchentliche Arbeitszeit</th>
+                        <th>Anteil Stunden im Projekt</th>
+                        <th>Bereits zugewiesene Stunden</th>
+                        <th>Verbleibende Stunden</th>
+                        <th>Kommentar</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mitarbeiter in betreuungsschluessel.mitarbeiter %}
                     <tr>
                         <td>
-                            <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_detail' mitarbeiter.id %}?next={{ request.path }}">
+                            <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_detail' mitarbeiter.id %}?next={{ request.path }}" class="card-link2">
                                 {{ mitarbeiter.nachname }}, {{ mitarbeiter.vorname }}
                             </a>
                         </td>
@@ -110,39 +134,47 @@
                         <td>{{ mitarbeiter.qualifikation }}</td>
                         <td>{{ mitarbeiter.max_woechentliche_arbeitszeit }}</td>
                         <td>{{ mitarbeiter.anteil_stunden_pro_woche }}</td>
-                        <td>{{ mitarbeiter.zugewiesene_stunden }}</td> <!-- Hier wird total_hours angezeigt -->
-                        <td>{{ mitarbeiter.freie_stunden }}</td> <!-- Hier wird free_hours angezeigt -->
+                        <td>{{ mitarbeiter.zugewiesene_stunden }}</td>
+                        <td class="{% if mitarbeiter.freie_stunden == 0 or mitarbeiter.freie_stunden is None %}highlight-error{% endif %}">
+                            {{ mitarbeiter.freie_stunden }}
+                        </td>
                         <td>{{ mitarbeiter.kommentar }}</td>
                         <td>
-                            <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_betreuungsschluessel_delete' mitarbeiter.mitarbeiter_betreuungsschluessel_id %}">
+                            <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_betreuungsschluessel_delete' mitarbeiter.mitarbeiter_betreuungsschluessel_id %}" class="action-link">
                                 Entfernen
                             </a>
                         </td>
                     </tr>
-                {% empty %}
+                    {% empty %}
                     <tr>
-                        <td colspan="7">Keine Mitarbeiter zugewiesen.</td>
+                        <td colspan="9">Keine Mitarbeiter:innen zugewiesen.</td>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        
-        <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_betreuungsschluessel_create' betreuungsschluessel.id %}?next={{ request.path }}">
-            Mitarbeiter zuweisen
-        </a>
-
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_betreuungsschluessel_create' betreuungsschluessel.id %}?next={{ request.path }}" class="auftrag-detail-link2">
+                Mitarbeiter zuweisen
+            </a>
+        </section>
+        {% empty %}
+        <p>Klicke auf den Namen des Auftrags und erstelle einen neuen Betreuungsschlüssel.</p>
+        {% endfor %}
+    </section>
     {% endfor %}
-{% endfor %}
+{% else %}
+    <p>Klicke auf "Neuer Auftrag", um einen Auftrag zu erstellen.</p>
+{% endif %}
 
-<a href="{% url 'PersonaleinsatzplanHaeH:auftrag_create' %}?personaleinsatzplan_id={{ personaleinsatzplan.pk }}&next={{ request.path }}">
-    Neuen Auftrag erstellen
-</a>
-
-<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_pdf' personaleinsatzplan.pk %}">
-    Personaleinsatzplan als PDF herunterladen
-</a>
-
-<a href="{{ zurueck_link }}">Zurück</a>
+<div class="link-container">
+    <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_create' %}?personaleinsatzplan_id={{ personaleinsatzplan.pk }}&next={{ request.path }}" class="action-link">
+        Neuer Auftrag
+    </a>
+    <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_pdf' personaleinsatzplan.pk %}" class="action-link">
+        Personaleinsatzplan drucken
+    </a>
+    <a href="{{ zurueck_link }}" class="action-link">Zurück</a>
+</div>
 
 </body>
 </html>

@@ -1,45 +1,46 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
-    <title>Title</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<h1>Willkommen zur Personaleinsatzplanverwaltung</h1>
+<div class="navbar">
+    <a href="{% url 'PersonaleinsatzplanHaeH:logout' %}" class="logout-link">Abmelden</a>
+</div>
 
-<h2>Niederlassungen</h2>
+<h1>Willkommen zur F1 Personaleinsatzplanung</h1>
 
-<ul>
+<h3>Wähle deine Niederlassung</h3>
+
+<div class="card-container">
     {% for niederlassung in niederlassungen %}
-    <li>
-        <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplaene_fuer_niederlassung' niederlassung.pk %}?next={% url 'PersonaleinsatzplanHaeH:startseite' %}">
-            {{ niederlassung.name }}
-        </a>
-    
-    </li>
+    <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplaene_fuer_niederlassung' niederlassung.pk %}?next={% url 'PersonaleinsatzplanHaeH:startseite' %}" class="card-link-wrapper">
+        <div class="card">
+            <h4>{{ niederlassung.name }}</h4>
+            <span class="card-link">Personaleinsatzpläne ansehen</span>
+        </div>
+    </a>
     {% endfor %}
-</ul>
+</div>
 
-<a href="{% url 'PersonaleinsatzplanHaeH:auftrag_list' %}?next={{ request.path }}">
-    Zur Liste allen Aufträgen
-</a>
-
-<a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_list' %}?next={{ request.path }}">
-    Zur Liste aller Mitarbeiter
-</a>
-
-
-<a href="{% url 'PersonaleinsatzplanHaeH:alle_personaleinsatzplaene_pdf' %}">
-    Alle Personaleinsatzpläne als PDF herunterladen
-</a>
-
-
-
-<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_list2' %}?next={{ request.path }}">
-        Zur Liste aller Personaleinsatzpläne
-</a>
-
+<div class="link-container">
+    <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_list2' %}?next={{ request.path }}" class="action-link">
+        Liste aller Personaleinsatzpläne
+    </a>
+    <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_list' %}?next={{ request.path }}" class="action-link">
+        Liste aller Aufträge
+    </a>
+    <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_list' %}?next={{ request.path }}" class="action-link">
+        Liste aller Mitarbeiter
+    </a>
+    <a href="{% url 'PersonaleinsatzplanHaeH:alle_personaleinsatzplaene_pdf' %}" class="action-link">
+        Alle Personaleinsatzpläne als PDF herunterladen
+    </a>
+</div>
 
 </body>
 </html>

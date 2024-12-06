@@ -1,0 +1,503 @@
+/* Reset und Grundstil */
+body, h1, h2, h3, h4, ul, li, a, table, td, th {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Open Sans', Arial, sans-serif;
+    background-color: #f7f7f7;
+    color: #333;
+    line-height: 1.6;
+    padding: 20px;
+}
+
+/* Überschriften */
+h1, h2, h3, h4 h5{
+    margin-bottom: 20px;
+    color: #e7661f;
+    font-weight: 600;
+}
+
+h1 {
+    font-size: 2.5em;
+}
+
+h2 {
+    font-size: 2em;
+}
+
+h3 {
+    font-size: 1.5em;
+}
+
+h4 {
+    font-size: 1.2em;
+}
+
+h5 {
+    font-size: 0.8em;
+}
+
+/* Links */
+a {
+    text-decoration: none;
+    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+    border-radius: 5px;
+    font-weight: 600;
+}
+
+/* Card-Links */
+.card-link {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: white; /* Grün */
+    color: #333;
+    font-size: 0.9em;
+    text-align: center;
+}
+
+.card-link2 {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: white; /* Grün */
+    color: #31c05c;
+    font-size: 0.9em;
+    text-align: center;
+}
+
+
+/* Action-Links */
+.action-link {
+    display: inline-block;
+    margin: 10px;
+    padding: 10px 25px;
+    background-color: #31c05c; /* Blau */
+    color: white;
+    font-size: 1em;
+    text-align: center;
+}
+
+
+.action-link:hover {
+    background-color: #248741;
+}
+
+.action-link2 {
+    display: inline-block;
+    margin: 1px;
+    padding: 08px 20px;
+    background-color: #31c05c; /* Blau */
+    color: white;
+    font-size: 0.8em;
+    text-align: center;
+}
+
+.action-link2:hover {
+    background-color: #248741;
+}
+
+
+/* Auftrags-Detail-Links */
+.auftrag-detail-link {
+    display: inline-block;
+    margin: 10px;
+    padding: 10px 20px;
+    background-color: #e7661f; /* Blau */
+    color: white;
+    font-size: 1em;
+    text-align: center;
+}
+
+.auftrag-detail-link:hover {
+    background-color: #e7661f;
+}
+
+.auftrag-detail-link2 {
+    display: inline-block;
+    margin: 1px;
+    padding: 08px 20px;
+    background-color: #31c05c; /* Blau */
+    color: white;
+    font-size: 0.8em;
+    text-align: center;
+}
+
+.auftrag-detail-link2:hover {
+    background-color: #248741;
+}
+
+/* Card-Container */
+.card-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    margin: 20px 0;
+    padding: 0 10px;
+}
+
+.card-link-wrapper {
+    display: block; /* Macht die gesamte Karte klickbar */
+    text-decoration: none; /* Entfernt die Unterstreichung */
+    color: inherit; /* Erbt die Textfarbe */
+}
+
+.card-link-wrapper:hover .card {
+    transform: translateY(-5px); /* Hover-Effekt für die Karte */
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+
+.card {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 300px; /* Festgelegte Breite */
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card h4 {
+    font-size: 1.8em;
+    color: #31c05c;
+    margin-bottom: 10px;
+}
+
+.card h5 {
+    font-size: 1.0em;
+    color: #31c05c;
+    margin-bottom: 10px;
+}
+
+.card p {
+    color: #555;
+    font-size: 0.95em;
+    margin-bottom: 15px;
+}
+
+/* Tabellen */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Block-Container */
+.block-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.block {
+    background-color: #f7f7f7;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    flex: 1 1 calc(33.333% - 15px); /* Drei Spalten */
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.block:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.block span {
+    display: block;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+/* Block-Links */
+.block a {
+    padding: 8px 15px;
+    background-color: #31c05c;
+    color: white;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.block a:hover {
+    background-color: #239848;
+}
+
+/* Aktionen */
+.actions {
+    margin: 20px 0;
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+}
+
+/* Nachrichten */
+.no-plans-message {
+    text-align: center;
+    font-size: 1.2em;
+    color: #555;
+    margin: 20px 0;
+}
+
+/* Responsives Design */
+@media (max-width: 768px) {
+    .block-container, .card-container {
+        flex-direction: column;
+    }
+
+    .block, .card {
+        flex: 1 1 100%;
+    }
+
+    .actions {
+        flex-direction: column;
+    }
+}
+
+.personaleinsatzplan-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    background-color: #31c05c; /* Grün */
+    color: white;
+    border-radius: 5px;
+    font-size: 0.9em;
+    font-weight: bold;
+    text-align: center;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.personaleinsatzplan-badge:hover {
+    background-color: #239848; /* Dunkleres Grün */
+    color: white;
+}
+
+.filter-select {
+    display: block;
+    width: 100%; /* Passt die Breite an das Layout an */
+    max-width: 300px;
+    padding: 10px;
+    font-size: 1em;
+    color: #333; /* Textfarbe */
+    background-color: #f7f7f7; /* Hintergrundfarbe */
+    border: 1px solid #ddd; /* Rahmen */
+    border-radius: 5px; /* Abgerundete Ecken */
+    margin-bottom: 15px; /* Abstand zwischen Dropdowns */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.filter-row {
+    display: flex; /* Flexbox aktiviert */
+    align-items: center; /* Vertikal zentriert */
+    gap: 10px; /* Abstand zwischen den Elementen */
+}
+
+.filter-select {
+    margin-left: 5px; /* Optionaler Abstand zwischen Label und Dropdown */
+}
+
+
+.filter-select:hover {
+    border-color: #31c05c; /* Grünlicher Rahmen bei Hover */
+    box-shadow: 0 0 5px rgba(49, 192, 92, 0.5); /* Leichter Hover-Effekt */
+}
+
+.filter-select:focus {
+    border-color: #31c05c;
+    box-shadow: 0 0 5px rgba(49, 192, 92, 0.5);
+    outline: none; /* Entfernt den Standard-Fokus */
+}
+
+.filter-form label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.filter-row {
+    display: flex; /* Flexbox aktiviert */
+    align-items: center; /* Vertikal zentriert */
+    gap: 10px; /* Abstand zwischen den Elementen */
+}
+
+.filter-select {
+    margin-left: 5px; /* Optionaler Abstand zwischen Label und Dropdown */
+}
+
+.link-container {
+    position: fixed; /* Fixiert das Element am unteren Rand */
+    bottom: 0; /* Kein Abstand vom unteren Rand */
+    left: 0; /* Kein Abstand vom linken Rand */
+    right: 0; /* Kein Abstand vom rechten Rand */
+    background-color: #f7f7f7; /* Hintergrundfarbe */
+    padding: 10px 20px; /* Innenabstand: oben/unten 15px, links/rechts 20px */
+    box-shadow: 0px -2px 4px rgba(0, 0, 0, 0.1); /* Schatteneffekt */
+    z-index: 1000; /* Überlagert andere Elemente */
+    height: 80px; /* Automatische Höhe basierend auf dem Inhalt */
+    gap: 10px; /* Abstand zwischen den Kindern */
+    justify-content: left; /* Zentriert die Inhalte horizontal */
+}
+
+
+.personaleinsatzplan-seite {
+    padding-bottom: 110px; /* Gleicher Wert wie die Höhe von .link-container */
+}
+
+.highlight-error {
+    color: #d00000; /* Dunkelroter Text */
+    font-weight: bold; /* Optional: Text fett hervorheben */
+
+}
+
+
+/* Allgemeine Stile für Form Section */
+.form-section {
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #ffffff; /* Weißer Hintergrund */
+    border: 1px solid #ddd; /* Leichter Rahmen */
+    border-radius: 5px; /* Abgerundete Ecken */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Leichter Schatten */
+    max-width: 600px; /* Begrenzte Breite */
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Abstand zwischen Formularfeldern */
+}
+
+form label {
+    display: block; /* Erzwingt eine vertikale Anordnung */
+    margin-bottom: 5px; /* Abstand zwischen Label und Feld */
+    font-size: 1em;
+    font-weight: bold;
+}
+
+/* Einheitliche Breite für alle Formularfelder */
+form select,
+form input[type="text"],
+form input[type="number"],
+form input[type="password"],
+form input[type="email"],
+form textarea {
+    width: 100%; /* Nimmt die volle Breite des Containers ein */
+    max-width: 500px; /* Begrenzte Breite */
+    padding: 10px; /* Einheitlicher Innenabstand */
+    font-size: 1em; /* Einheitliche Schriftgröße */
+    border: 1px solid #ddd; /* Einheitlicher Rahmen */
+    border-radius: 5px; /* Abgerundete Ecken */
+    background-color: #f7f7f7; /* Einheitlicher Hintergrund */
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1); /* Leichter Innenschatten */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Fokus-Stile für alle Formularfelder */
+form select:focus,
+form input:focus,
+form textarea:focus {
+    border-color: #31c05c; /* Grünlich bei Fokus */
+    box-shadow: 0 0 5px rgba(49, 192, 92, 0.5); /* Glow-Effekt */
+    outline: none; /* Standard-Fokusrahmen entfernen */
+}
+
+/* Entferne native Browser-Pfeile für Zahlenfelder */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none; /* Entfernt Pfeile in Chrome/Safari */
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield; /* Entfernt Pfeile in Firefox */
+}
+
+/* Fieldset und Legend */
+fieldset {
+    border: 1px solid #ccc;
+    padding: 15px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+legend {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #31c05c;
+    margin-bottom: 10px;
+}
+
+/* Button-Stile */
+.btn {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 10px 20px;
+    font-size: 1em;
+    font-weight: bold;
+    color: white;
+    background-color: #31c05c;
+    border: none;
+    border-radius: 5px;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out, transform 0.2s ease;
+}
+
+.btn:hover {
+    background-color: #239848; /* Dunkleres Grün */
+}
+
+.btn:active {
+    background-color: #1e7a3a; /* Noch dunkler bei Aktivierung */
+    transform: scale(0.98); /* Klick-Feedback */
+}
+
+/* Navbar für den Logout-Link */
+.navbar {
+    position: absolute;
+    top: 20px; /* Abstand vom oberen Rand */
+    right: 20px; /* Abstand vom rechten Rand */
+    font-family: 'Open Sans', sans-serif;
+}
+
+.logout-link {
+    font-weight: 600;
+    color: #31c05c; /* Passend zu deinem grünen Design */
+    text-decoration: none;
+    background-color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: 1px solid #31c05c;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    font-size: 1em;
+}
+
+.logout-link:hover {
+    background-color: #31c05c; /* Grün beim Hover */
+    color: white; /* Weißer Text beim Hover */
+    transform: scale(1.05); /* Leichter Zoom-Effekt */
+}

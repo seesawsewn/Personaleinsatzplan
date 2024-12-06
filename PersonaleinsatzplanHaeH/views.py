@@ -1,11 +1,12 @@
 from django.db.models import Sum
-from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView, FormView, TemplateView, View
-from django.urls import reverse_lazy, reverse
-from .models import Auftrag, Personaleinsatzplan, Betreuungsschluessel, Mitarbeiter, Niederlassung, Position, \
-    PersonaleinsatzplanStatus, MitarbeiterBetreuungsschluessel, VollzeitaequivalentStunden
-from django.shortcuts import redirect
-from .forms import MitarbeiterZuweisungForm, MitarbeiterBetreuungsschluesselForm, MitarbeiterForm, \
-    BetreuungsschluesselForm
+from django.db.models.functions import ExtractYear
+from django.views.generic import CreateView, ListView, DetailView, UpdateView, DeleteView, TemplateView, View
+from django.urls import reverse
+from .models import Auftrag, Personaleinsatzplan, Betreuungsschluessel, Mitarbeiter, Niederlassung, \
+MitarbeiterBetreuungsschluessel
+
+from .forms import MitarbeiterZuweisungForm, MitarbeiterForm, \
+    BetreuungsschluesselForm, AuftragForm
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
@@ -17,12 +18,11 @@ from reportlab.platypus import Paragraph
 from django.db.models.deletion import ProtectedError
 from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth import logout
+from django.shortcuts import redirect
 
-
-
-
-
-class StartseiteView(TemplateView):
+class StartseiteView(LoginRequiredMixin, TemplateView):
     template_name = 'startseite.html'
 
     def get_context_data(self, **kwargs):
@@ -32,10 +32,14 @@ class StartseiteView(TemplateView):
         return context
 
 
+def custom_logout_view(request):
+    logout(request)
+    return redirect('PersonaleinsatzplanHaeH:login')  # Weiterleitung zur Login-Seite
+
+
+
+
 # Erstellen eines Personaleinsatzplans
-
-
-
 class PersonaleinsatzplanCreateView(CreateView):
     model = Personaleinsatzplan
     form_class = PersonaleinsatzplanForm
@@ -51,21 +55,19 @@ class PersonaleinsatzplanCreateView(CreateView):
                 pass  # Falls keine gültige Niederlassung gefunden wird, überspringe
         return initial
 
+    def form_valid(self, form):
+        return super().form_valid(form)
+
     def get_success_url(self):
-        # Prüfe den `next`-Parameter
         next_url = self.request.POST.get('next') or self.request.GET.get('next')
         if next_url:
             return next_url
-        # Standard-Redirect zur Personaleinsatzplan-Liste
         return reverse('PersonaleinsatzplanHaeH:personaleinsatzplan_list')
 
     def get_context_data(self, **kwargs):
-        # Standard-Kontextdaten von CreateView übernehmen
         context = super().get_context_data(**kwargs)
-        # Rück-Link zur vorherigen Seite oder zur Startseite
         context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
         return context
-
 
 
 
@@ -83,12 +85,24 @@ class PersonaleinsatzplanList2View(ListView):
         niederlassung_id = self.request.GET.get('niederlassung')
         if niederlassung_id:
             queryset = queryset.filter(niederlassung_id=niederlassung_id)
+
+        # Filter nach Jahr, falls im GET-Parameter vorhanden
+        jahr = self.request.GET.get('jahr')
+        if jahr:
+            queryset = queryset.filter(gueltigkeit_jahr=jahr)
+
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Füge alle Niederlassungen und den aktuellen Filter zum Kontext hinzu
+
+        # Füge alle Niederlassungen und Jahre sowie den aktuellen Filter zum Kontext hinzu
         context['niederlassungen'] = Niederlassung.objects.all()
+        context['jahre'] = (
+            Personaleinsatzplan.objects.values_list('gueltigkeit_jahr', flat=True)
+            .distinct()
+            .order_by('gueltigkeit_jahr')
+        )
         context['zurueck_link'] = self.request.GET.get('next', '/')
         return context
 
@@ -114,7 +128,6 @@ class PersonaleinsatzplanDetailView(DetailView):
             for schluessel in auftrag.betreuungsschluessel.all():
                 mitarbeiter_zuweisungen = schluessel.mitarbeiter_zuweisungen.all()
 
-                # Mitarbeiterdaten sammeln
                 mitarbeiter_list = []
                 for zuweisung in mitarbeiter_zuweisungen:
                     mitarbeiter_list.append({
@@ -131,7 +144,6 @@ class PersonaleinsatzplanDetailView(DetailView):
                         'mitarbeiter_betreuungsschluessel_id': zuweisung.id,
                     })
 
-                # Betreuungsschlüsseldetails sammeln
                 betreuungsschluessel_details.append({
                     'id': schluessel.id,
                     'name': schluessel.name,
@@ -147,13 +159,11 @@ class PersonaleinsatzplanDetailView(DetailView):
                     'mitarbeiter': mitarbeiter_list,
                 })
 
-            # Auftragsdetails sammeln
             auftrag_details.append({
                 'auftrag': auftrag,
                 'betreuungsschluessel': betreuungsschluessel_details,
             })
 
-        # Füge die Daten dem Kontext hinzu
         context['auftrag_details'] = auftrag_details
 
         # Rück-Link zur vorherigen Seite oder Standard auf die Startseite setzen
@@ -170,22 +180,22 @@ class PersonaleinsatzplanDetail2(DetailView):
         # Standard-Kontextdaten übernehmen
         context = super().get_context_data(**kwargs)
 
-        # `next`-Parameter auslesen, Standardwert: Startseite
         context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
         return context
 
-        # Aufträge des Personaleinsatzplans in den Kontext hinzufügen
         context['auftraege'] = self.object.auftraege.all()
 
         return context
 
 
-
-# Aktualisieren eines Personaleinsatzplans
 class PersonaleinsatzplanUpdateView(UpdateView):
     model = Personaleinsatzplan
-    fields = ['name', 'gueltigkeit_monat', 'gueltigkeit_jahr', 'kostentraeger', 'ersteller', 'version', 'status', 'niederlassung']
+    fields = ['gueltigkeit_monat', 'gueltigkeit_jahr', 'kostentraeger', 'ersteller', 'status', 'niederlassung']
     template_name = 'personaleinsatzplan_form.html'
+
+    def form_valid(self, form):
+        # Der Name wird automatisch beim Speichern im Modell generiert.
+        return super().form_valid(form)
 
     def get_success_url(self):
         next_url = self.request.POST.get('next') or self.request.GET.get('next')
@@ -194,7 +204,6 @@ class PersonaleinsatzplanUpdateView(UpdateView):
         return reverse('PersonaleinsatzplanHaeH:personaleinsatzplan_list')
 
 
-# Löschen eines Personaleinsatzplans
 
 class PersonaleinsatzplanDeleteView(DeleteView):
     model = Personaleinsatzplan
@@ -202,9 +211,7 @@ class PersonaleinsatzplanDeleteView(DeleteView):
     success_url = reverse_lazy('startseite')
 
     def post(self, request, *args, **kwargs):
-        """
-        Überschreibe die POST-Methode, um den ProtectedError korrekt abzufangen.
-        """
+
         self.object = self.get_object()
         try:
             # Versuche, das Objekt zu löschen
@@ -221,21 +228,13 @@ class PersonaleinsatzplanDeleteView(DeleteView):
             return self.render_to_response(context)
 
 
-
-
-
-# Erstellen eines Auftrags
 class AuftragCreateView(CreateView):
     model = Auftrag
-    fields = [
-        'name', 'vergabenummer', 'optionsnummer', 'massnahmenummer', 'startdatum', 'enddatum',
-        'max_klienten', 'mindest_klienten', 'aktuell_klienten', 'personaleinsatzplan'
-    ]
+    form_class = AuftragForm
     template_name = 'auftrag_form.html'
 
     def get_initial(self):
         initial = super().get_initial()
-        # Übernehme den Personaleinsatzplan aus der URL, falls übergeben
         personaleinsatzplan_id = self.request.GET.get('personaleinsatzplan_id')
         if personaleinsatzplan_id:
             initial['personaleinsatzplan'] = personaleinsatzplan_id
@@ -243,21 +242,16 @@ class AuftragCreateView(CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Füge den Personaleinsatzplan in den Kontext hinzu (optional)
         personaleinsatzplan_id = self.request.GET.get('personaleinsatzplan_id')
         if personaleinsatzplan_id:
             context['personaleinsatzplan'] = personaleinsatzplan_id
         return context
 
     def get_success_url(self):
-        # Weiterleitung zur vorherigen Seite oder Standard-Redirect
         next_url = self.request.POST.get('next') or self.request.GET.get('next')
         if next_url:
             return next_url
         return reverse('PersonaleinsatzplanHaeH:auftrag_list')
-
-
-# Liste aller Aufträge anzeigen
 
 
 class AuftragListView(ListView):
@@ -273,17 +267,30 @@ class AuftragListView(ListView):
         niederlassung_id = self.request.GET.get('niederlassung')
         if niederlassung_id:
             queryset = queryset.filter(personaleinsatzplan__niederlassung_id=niederlassung_id)
+
+        # Filter nach Jahr, falls im GET-Parameter vorhanden
+        jahr = self.request.GET.get('jahr')
+        if jahr:
+            queryset = queryset.filter(startdatum__year=jahr)
+
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Füge alle Niederlassungen und den aktuellen Filter zum Kontext hinzu
         context['niederlassungen'] = Niederlassung.objects.all()
+
+        # Füge alle verfügbaren Jahre für den Filter hinzu
+        context['jahre'] = (
+            Auftrag.objects.annotate(jahr=ExtractYear('startdatum'))
+            .values_list('jahr', flat=True)
+            .distinct()
+            .order_by('jahr')
+        )
+
         context['zurueck_link'] = self.request.GET.get('next', '/')
         return context
 
 
-# Detailansicht eines Auftrags
 
 
 class AuftragDetailView(DetailView):
@@ -296,7 +303,6 @@ class AuftragDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         betreuungsschluessel_details = []
 
-        # Sammeln der Betreuungsschlüssel und zugewiesenen Mitarbeiter
         for schluessel in self.object.betreuungsschluessel.all():
             mitarbeiter_details = []
             for zuweisung in schluessel.mitarbeiter_zuweisungen.all():
@@ -315,45 +321,33 @@ class AuftragDetailView(DetailView):
                 'mitarbeiter_details': mitarbeiter_details,
             })
 
-        # Kontext hinzufügen
         context['betreuungsschluessel_details'] = betreuungsschluessel_details
         context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
         return context
 
 
-# Aktualisieren eines Auftrags
 class AuftragUpdateView(UpdateView):
     model = Auftrag
-    fields = [
-        'name', 'vergabenummer', 'optionsnummer', 'massnahmenummer', 'startdatum', 'enddatum',
-        'max_klienten', 'mindest_klienten', 'aktuell_klienten', 'personaleinsatzplan'
-    ]
+    form_class = AuftragForm  # Nutzt das angepasste Formular
     template_name = 'auftrag_form.html'
     success_url = reverse_lazy('PersonaleinsatzplanHaeH:auftrag_list')
 
-# Löschen eines Auftrags
 
 class AuftragDeleteView(DeleteView):
     model = Auftrag
     template_name = 'auftrag_confirm_delete.html'
 
     def get_success_url(self):
-        # Standard-Redirect zur Auftragsliste
         return reverse_lazy('PersonaleinsatzplanHaeH:personaleinsatzplan_list2')
 
     def post(self, request, *args, **kwargs):
-        """
-        Überschreibe die POST-Methode, um den ProtectedError korrekt abzufangen.
-        """
+
         self.object = self.get_object()
         next_url = request.POST.get('next')  # Nimm den 'next'-Parameter aus dem POST-Request
         try:
-            # Versuche, das Objekt zu löschen
             self.object.delete()
-            # Weiterleitung basierend auf 'next' oder Standard-URL
             return HttpResponseRedirect(next_url or self.get_success_url())
         except ProtectedError as e:
-            # ProtectedError abfangen und Kontextdaten vorbereiten
             related_objects = [str(obj) for obj in e.protected_objects]
             context = self.get_context_data()
             context['error_message'] = (
@@ -363,19 +357,15 @@ class AuftragDeleteView(DeleteView):
             return self.render_to_response(context)
 
 
-# Erstellen eines Betreuungsschlüssels
-
 class BetreuungsschluesselCreateView(CreateView):
     model = Betreuungsschluessel
     form_class = BetreuungsschluesselForm
     template_name = 'betreuungsschluessel_form.html'
 
     def get_success_url(self):
-        # Hole die 'next'-URL aus den GET- oder POST-Daten
         next_url = self.request.POST.get('next') or self.request.GET.get('next')
         if next_url:
-            return next_url  # Zurück zur vorherigen Seite
-        # Standard-Redirect, falls keine 'next'-URL vorhanden ist
+            return next_url
         return reverse('PersonaleinsatzplanHaeH:betreuungsschluessel_list')
 
     def get_initial(self):
@@ -393,75 +383,22 @@ class BetreuungsschluesselCreateView(CreateView):
         return super().form_valid(form)
 
 
-
-# Liste aller Betreuungsschlüssel anzeigen
-class BetreuungsschluesselListView(ListView):
-    model = Betreuungsschluessel
-    template_name = 'betreuungsschluessel_list.html'
-    context_object_name = 'betreuungsschluessel'
-
-    def get_context_data(self, **kwargs):
-        # Standard-Kontextdaten übernehmen
-        context = super().get_context_data(**kwargs)
-        # Rück-Link zur vorherigen Seite oder Standard auf die Startseite setzen
-        context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
-        return context
-
-# Detailansicht eines Betreuungsschlüssels
-class BetreuungsschluesselDetailView(DetailView, FormView):
-    model = Betreuungsschluessel
-    template_name = 'betreuungsschluessel_detail.html'
-    context_object_name = 'betreuungsschluessel'
-    form_class = MitarbeiterZuweisungForm
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['zuweisung_form'] = self.get_form()
-        return context
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['schluessel'] = self.object  # Betreuungsschlüssel an das Formular übergeben
-        return kwargs
-
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        form = self.get_form()
-        if form.is_valid():
-            form.save()
-            return redirect(self.object.get_absolute_url())
-        else:
-            return self.form_invalid(form)
-
-# Aktualisieren eines Betreuungsschlüssels
-class BetreuungsschluesselUpdateView(UpdateView):
-    model = Betreuungsschluessel
-    fields = ['name', 'position', 'klienten_pro_betreuer', 'auftrag']
-    template_name = 'betreuungsschluessel_form.html'
-    success_url = reverse_lazy('PersonaleinsatzplanHaeH:betreuungsschluessel_list')
-
-# Löschen eines Betreuungsschlüssels
-
 class BetreuungsschluesselDeleteView(DeleteView):
     model = Betreuungsschluessel
     template_name = 'betreuungsschluessel_confirm_delete.html'
 
     def get_success_url(self):
-        # Weiterleitung zu den Auftragsdetails
         auftrag = self.object.auftrag
         return reverse('PersonaleinsatzplanHaeH:auftrag_detail', kwargs={'pk': auftrag.pk})
 
     def post(self, request, *args, **kwargs):
-        """
-        Überschreibe die POST-Methode, um den ProtectedError korrekt abzufangen.
-        """
+
         self.object = self.get_object()
         try:
-            # Versuche, das Objekt zu löschen
             self.object.delete()
             return HttpResponseRedirect(self.get_success_url())
         except ProtectedError as e:
-            # ProtectedError abfangen und Kontextdaten vorbereiten
+
             related_objects = [str(obj) for obj in e.protected_objects]
             context = self.get_context_data()
             context['error_message'] = (
@@ -471,8 +408,6 @@ class BetreuungsschluesselDeleteView(DeleteView):
             return self.render_to_response(context)
 
 
-
-# Erstellen eines Mitarbeiters
 class MitarbeiterCreateView(CreateView):
     model = Mitarbeiter
     form_class = MitarbeiterForm
@@ -480,7 +415,6 @@ class MitarbeiterCreateView(CreateView):
 
     def get_initial(self):
         initial = super().get_initial()
-        # Übergebe niederlassung_id aus der URL, falls vorhanden
         niederlassung_id = self.request.GET.get('niederlassung_id')  # oder self.kwargs.get('niederlassung_id')
         if niederlassung_id:
             try:
@@ -495,8 +429,6 @@ class MitarbeiterCreateView(CreateView):
     def get_success_url(self):
         return reverse('PersonaleinsatzplanHaeH:mitarbeiter_list')
 
-
-# Liste aller Mitarbeiter anzeigen
 
 class MitarbeiterListView(ListView):
     model = Mitarbeiter
@@ -528,9 +460,6 @@ class MitarbeiterListView(ListView):
         return context
 
 
-
-
-# Detailansicht eines Mitarbeiters
 class MitarbeiterDetailView(DetailView):
     model = Mitarbeiter
     template_name = 'mitarbeiter_detail.html'
@@ -540,19 +469,22 @@ class MitarbeiterDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         mitarbeiter = self.object
 
+        # Zuweisungen des Mitarbeiters abrufen
         betreuungsschluessel_zuweisungen = MitarbeiterBetreuungsschluessel.objects.filter(mitarbeiter=mitarbeiter)
 
-        total_hours = betreuungsschluessel_zuweisungen.aggregate(Sum('zugewiesene_stunden'))[
-                          'zugewiesene_stunden__sum'] or 0
+        # Aggregation der Stunden
+        total_hours = betreuungsschluessel_zuweisungen.aggregate(
+            Sum('anteil_stunden_pro_woche')
+        )['anteil_stunden_pro_woche__sum'] or 0
         free_hours = mitarbeiter.max_woechentliche_arbeitszeit - total_hours
 
+        # Kontext aktualisieren
         context['total_hours'] = total_hours
         context['free_hours'] = free_hours
 
-        betreuungsschluessel_zuweisungen = MitarbeiterBetreuungsschluessel.objects.filter(
-            mitarbeiter=mitarbeiter).select_related('schluessel', 'auftrag')
+        # Detailinformationen zu Aufträgen
+        betreuungsschluessel_zuweisungen = betreuungsschluessel_zuweisungen.select_related('schluessel', 'auftrag')
         auftraege_info = []
-
         for zuweisung in betreuungsschluessel_zuweisungen:
             if zuweisung.schluessel and zuweisung.schluessel.auftrag:
                 auftrag_info = {
@@ -563,37 +495,34 @@ class MitarbeiterDetailView(DetailView):
 
         context['auftraege_info'] = auftraege_info
 
+        # Zurück-Link
         context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
 
         return context
 
-# Aktualisieren eines Mitarbeiters
+
 class MitarbeiterUpdateView(UpdateView):
     model = Mitarbeiter
     fields = ['vorname', 'nachname', 'qualifikation', 'max_woechentliche_arbeitszeit', 'personalnummer', 'geburtsdatum', 'vertragsbeginn', 'vertragsendeBefristet', 'unbefristet', 'niederlassung']
     template_name = 'mitarbeiter_form.html'
     success_url = reverse_lazy('PersonaleinsatzplanHaeH:mitarbeiter_list')
 
-# Löschen eines Mitarbeiters
+
 class MitarbeiterDeleteView(DeleteView):
     model = Mitarbeiter
     template_name = 'mitarbeiter_confirm_delete.html'
 
     def get_success_url(self):
-        # Weiterleitung zur Liste aller Mitarbeiter nach erfolgreichem Löschen
         return reverse_lazy('PersonaleinsatzplanHaeH:mitarbeiter_list')
 
     def post(self, request, *args, **kwargs):
-        """
-        Überschreibe die POST-Methode, um den ProtectedError korrekt abzufangen.
-        """
+
         self.object = self.get_object()
         try:
-            # Versuche, den Mitarbeiter zu löschen
             self.object.delete()
             return HttpResponseRedirect(self.get_success_url())
         except ProtectedError as e:
-            # ProtectedError abfangen und den zugehörigen Auftrag ermitteln
+
             related_objects = e.protected_objects
 
             # Extrahiere alle zugehörigen Aufträge
@@ -613,14 +542,19 @@ class MitarbeiterDeleteView(DeleteView):
             return self.render_to_response(context)
 
 
-
-
-
-
 class MitarbeiterBetreuungsschluesselCreateView(CreateView):
     model = MitarbeiterBetreuungsschluessel
-    form_class = MitarbeiterBetreuungsschluesselForm
+    form_class = MitarbeiterZuweisungForm
     template_name = 'mitarbeiter_betreuungsschluessel_form.html'
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        schluessel_id = self.kwargs.get('schluessel_id')
+        if schluessel_id:
+            schluessel = Betreuungsschluessel.objects.get(pk=schluessel_id)
+            kwargs['schluessel'] = schluessel
+            kwargs['personaleinsatzplan'] = schluessel.auftrag.personaleinsatzplan  # Zeitraum
+        return kwargs
 
     def get_initial(self):
         initial = super().get_initial()
@@ -647,73 +581,7 @@ class MitarbeiterBetreuungsschluesselCreateView(CreateView):
             return next_url
         return reverse('PersonaleinsatzplanHaeH:betreuungsschluessel_detail', kwargs={'pk': self.object.schluessel.pk})
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        schluessel_id = self.kwargs.get('schluessel_id')
-        if schluessel_id:
-            schluessel = Betreuungsschluessel.objects.get(pk=schluessel_id)
-            personaleinsatzplan = schluessel.auftrag.personaleinsatzplan
 
-            # Filtere die Betreuungsschlüssel für den gleichen Zeitraum wie der zugehörige Personaleinsatzplan
-            relevante_personaleinsatzplaene = Personaleinsatzplan.objects.filter(
-                gueltigkeit_monat=personaleinsatzplan.gueltigkeit_monat,
-                gueltigkeit_jahr=personaleinsatzplan.gueltigkeit_jahr
-            )
-            context['verfuegbare_betreuungsschluessel'] = Betreuungsschluessel.objects.filter(
-                auftrag__personaleinsatzplan__in=relevante_personaleinsatzplaene
-            )
-        context['next'] = self.request.GET.get('next', '')
-        return context
-
-
-
-
-
-
-
-# Liste aller MitarbeiterBetreuungsschluessel anzeigen
-class MitarbeiterBetreuungsschluesselListView(ListView):
-    model = MitarbeiterBetreuungsschluessel
-    template_name = 'mitarbeiter_betreuungsschluessel_list.html'
-    context_object_name = 'mitarbeiter_betreuungsschluessel'
-
-# Detailansicht eines MitarbeiterBetreuungsschluessel
-class MitarbeiterBetreuungsschluesselDetailView(DetailView):
-    model = MitarbeiterBetreuungsschluessel
-    template_name = 'mitarbeiter_betreuungsschluessel_detail.html'
-    context_object_name = 'mitarbeiter_betreuungsschluessel'
-
-# Aktualisieren eines MitarbeiterBetreuungsschluessel
-class MitarbeiterBetreuungsschluesselUpdateView(UpdateView):
-    model = MitarbeiterBetreuungsschluessel
-    form_class = MitarbeiterBetreuungsschluesselForm
-    template_name = 'mitarbeiter_betreuungsschluessel_form.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        zuweisung = self.object
-        schluessel = zuweisung.schluessel
-
-        # Filtere die Betreuungsschlüssel für den gleichen Zeitraum wie der zugehörige Personaleinsatzplan
-        if schluessel and schluessel.auftrag and schluessel.auftrag.personaleinsatzplan:
-            personaleinsatzplan = schluessel.auftrag.personaleinsatzplan
-            relevante_personaleinsatzplaene = Personaleinsatzplan.objects.filter(
-                gueltigkeit_monat=personaleinsatzplan.gueltigkeit_monat,
-                gueltigkeit_jahr=personaleinsatzplan.gueltigkeit_jahr
-            )
-            context['verfuegbare_betreuungsschluessel'] = Betreuungsschluessel.objects.filter(
-                auftrag__personaleinsatzplan__in=relevante_personaleinsatzplaene
-            )
-        return context
-
-    def get_success_url(self):
-        next_url = self.request.POST.get('next') or self.request.GET.get('next')
-        if next_url:
-            return next_url
-        return reverse('PersonaleinsatzplanHaeH:betreuungsschluessel_detail', kwargs={'pk': self.object.schluessel.pk})
-
-
-# Löschen eines MitarbeiterBetreuungsschluessel
 
 class MitarbeiterBetreuungsschluesselDeleteView(DeleteView):
     model = MitarbeiterBetreuungsschluessel
@@ -723,141 +591,50 @@ class MitarbeiterBetreuungsschluesselDeleteView(DeleteView):
         # Hole den zugehörigen Betreuungsschlüssel
         betreuungsschluessel = self.object.schluessel
 
-        # Hole den zugehörigen Personaleinsatzplan
         personaleinsatzplan = betreuungsschluessel.auftrag.personaleinsatzplan
 
-        # Zurück zur Übersicht des Personaleinsatzplans
         return reverse('PersonaleinsatzplanHaeH:personaleinsatzplan_uebersicht', kwargs={'pk': personaleinsatzplan.pk})
 
 
+class PersonaleinsatzplaeneFuerNiederlassungView(ListView):
+    model = Personaleinsatzplan
+    template_name = 'personaleinsatzplan_list.html'
+    context_object_name = 'personaleinsatzplaene'
 
-# Erstellen einer Niederlassung
-class NiederlassungCreateView(CreateView):
-    model = Niederlassung
-    fields = ['name']
-    template_name = 'niederlassung_form.html'
-    success_url = reverse_lazy('PersonaleinsatzplanHaeH:niederlassung_list')
+    def get_queryset(self):
+        niederlassung_id = self.kwargs.get('pk')
+        queryset = Personaleinsatzplan.objects.filter(niederlassung_id=niederlassung_id)
 
-# Liste aller Niederlassungen anzeigen
-class NiederlassungListView(ListView):
-    model = Niederlassung
-    template_name = 'niederlassung_list.html'
-    context_object_name = 'niederlassungen'
+        # Jahresfilter anwenden, falls angegeben
+        jahr = self.request.GET.get('jahr')
+        if jahr:
+            queryset = queryset.filter(gueltigkeit_jahr=jahr)
 
-# Detailansicht einer Niederlassung
-class NiederlassungDetailView(DetailView):
-    model = Niederlassung
-    template_name = 'niederlassung_detail.html'
-    context_object_name = 'niederlassung'
+        # Statusfilter anwenden, falls angegeben
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
 
-# Aktualisieren einer Niederlassung
-class NiederlassungUpdateView(UpdateView):
-    model = Niederlassung
-    fields = ['name']
-    template_name = 'niederlassung_form.html'
-    success_url = reverse_lazy('PersonaleinsatzplanHaeH:niederlassung_list')
+        return queryset
 
-# Löschen einer Niederlassung
-class NiederlassungDeleteView(DeleteView):
-    model = Niederlassung
-    template_name = 'niederlassung_confirm_delete.html'
-    success_url = reverse_lazy('PersonaleinsatzplanHaeH:niederlassung_list')
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['niederlassung'] = Niederlassung.objects.get(pk=self.kwargs.get('pk'))
 
-# Erstellen einer Position
-class PositionCreateView(CreateView):
-    model = Position
-    fields = ['bezeichnung']
-    template_name = 'position_form.html'
-    success_url = reverse_lazy('PersonaleinsatzplanHaeH:position_list')
+        # Liste der Jahre für den Jahresfilter
+        context['jahre'] = (
+            Personaleinsatzplan.objects.filter(niederlassung_id=self.kwargs.get('pk'))
+            .values_list('gueltigkeit_jahr', flat=True)
+            .distinct()
+            .order_by('gueltigkeit_jahr')
+        )
 
-# Liste aller Positionen anzeigen
-class PositionListView(ListView):
-    model = Position
-    template_name = 'position_list.html'
-    context_object_name = 'positionen'
+        # Statusauswahl für den Statusfilter
+        context['status_choices'] = Personaleinsatzplan.STATUS_CHOICES
 
-# Detailansicht einer Position
-class PositionDetailView(DetailView):
-    model = Position
-    template_name = 'position_detail.html'
-    context_object_name = 'position'
-
-# Aktualisieren einer Position
-class PositionUpdateView(UpdateView):
-    model = Position
-    fields = ['bezeichnung']
-    template_name = 'position_form.html'
-    success_url = reverse_lazy('PersonaleinsatzplanHaeH:position_list')
-
-# Löschen einer Position
-class PositionDeleteView(DeleteView):
-    model = Position
-    template_name = 'position_confirm_delete.html'
-    success_url = reverse_lazy('PersonaleinsatzplanHaeH:position_list')
-
-
-class PersonaleinsatzplanStatusCreateView(CreateView):
-    model = PersonaleinsatzplanStatus
-    fields = ['name']
-    template_name = 'personaleinsatzplanstatus_form.html'
-    success_url = reverse_lazy('personaleinsatzplanstatus_list')
-
-# Liste aller PersonaleinsatzplanStatus anzeigen
-class PersonaleinsatzplanStatusListView(ListView):
-    model = PersonaleinsatzplanStatus
-    template_name = 'personaleinsatzplanstatus_list.html'
-    context_object_name = 'personaleinsatzplanstatus'
-
-# Detailansicht eines PersonaleinsatzplanStatus
-class PersonaleinsatzplanStatusDetailView(DetailView):
-    model = PersonaleinsatzplanStatus
-    template_name = 'personaleinsatzplanstatus_detail.html'
-    context_object_name = 'personaleinsatzplanstatus'
-
-# Aktualisieren eines PersonaleinsatzplanStatus
-class PersonaleinsatzplanStatusUpdateView(UpdateView):
-    model = PersonaleinsatzplanStatus
-    fields = ['name']
-    template_name = 'personaleinsatzplanstatus_form.html'
-    success_url = reverse_lazy('personaleinsatzplanstatus_list')
-
-# Löschen eines PersonaleinsatzplanStatus
-class PersonaleinsatzplanStatusDeleteView(DeleteView):
-    model = PersonaleinsatzplanStatus
-    template_name = 'personaleinsatzplanstatus_confirm_delete.html'
-    success_url = reverse_lazy('personaleinsatzplanstatus_list')
-
-# Erstellen eines VollzeitaequivalentStunden
-class VollzeitaequivalentStundenCreateView(CreateView):
-    model = VollzeitaequivalentStunden
-    fields = ['wert']
-    template_name = 'vollzeitaequivalentstunden_form.html'
-    success_url = reverse_lazy('vollzeitaequivalentstunden_list')
-
-# Liste aller VollzeitaequivalentStunden anzeigen
-class VollzeitaequivalentStundenListView(ListView):
-    model = VollzeitaequivalentStunden
-    template_name = 'vollzeitaequivalentstunden_list.html'
-    context_object_name = 'vollzeitaequivalentstunden'
-
-# Detailansicht eines VollzeitaequivalentStunden
-class VollzeitaequivalentStundenDetailView(DetailView):
-    model = VollzeitaequivalentStunden
-    template_name = 'vollzeitaequivalentstunden_detail.html'
-    context_object_name = 'vollzeitaequivalentstunden'
-
-# Aktualisieren eines VollzeitaequivalentStunden
-class VollzeitaequivalentStundenUpdateView(UpdateView):
-    model = VollzeitaequivalentStunden
-    fields = ['wert']
-    template_name = 'vollzeitaequivalentstunden_form.html'
-    success_url = reverse_lazy('vollzeitaequivalentstunden_list')
-
-# Löschen eines VollzeitaequivalentStunden
-class VollzeitaequivalentStundenDeleteView(DeleteView):
-    model = VollzeitaequivalentStunden
-    template_name = 'vollzeitaequivalentstunden_confirm_delete.html'
-    success_url = reverse_lazy('vollzeitaequivalentstunden_list')
+        # `next`-Parameter auslesen, Standardwert: Startseite
+        context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
+        return context
 
 
 
@@ -877,7 +654,6 @@ class Personaleinsatzplanuebersicht(DetailView):
 
         auftrag_details = []
 
-        # Iteriere durch die Aufträge
         for auftrag in auftraege:
             if not auftrag.id:
                 continue  # Überspringe ungültige Aufträge
@@ -896,7 +672,6 @@ class Personaleinsatzplanuebersicht(DetailView):
 
                 for zuweisung in mitarbeiter_zuweisungen:
                     if zuweisung.mitarbeiter and zuweisung.mitarbeiter.id:
-                        # Berechnung der total_hours und free_hours für jeden Mitarbeiter
                         berechnung = MitarbeiterBetreuungsschluessel.calculate_hours_and_free_time(
                             mitarbeiter=zuweisung.mitarbeiter,
                             personaleinsatzplan=personaleinsatzplan
@@ -910,7 +685,7 @@ class Personaleinsatzplanuebersicht(DetailView):
                             'max_woechentliche_arbeitszeit': zuweisung.mitarbeiter.max_woechentliche_arbeitszeit,
                             'anteil_stunden_pro_woche': zuweisung.anteil_stunden_pro_woche,
                             'freie_stunden': berechnung['free_hours'],  # Berechnete freie Stunden
-                            'zugewiesene_stunden': berechnung['total_hours'],  # Berechnete Gesamtstunden
+                            'zugewiesene_stunden': berechnung['total_hours'],  # Berechnete Gesamtstunden, Achtung Name anders
                             'kommentar': zuweisung.kommentar,
                             'mitarbeiter_betreuungsschluessel_id': zuweisung.id,
                         })
@@ -937,17 +712,10 @@ class Personaleinsatzplanuebersicht(DetailView):
                 'betreuungsschluessel': betreuungsschluessel_details,
             })
 
-        # Füge die Auftragsdetails zum Kontext hinzu
         context['auftrag_details'] = auftrag_details
-
-        # Rück-Link zur vorherigen Seite oder zur Startseite hinzufügen
         context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
 
         return context
-
-
-
-
 
 
 class NiederlassungPersonaleinsatzplanuebersicht(DetailView):
@@ -1020,10 +788,7 @@ class NiederlassungPersonaleinsatzplanuebersicht(DetailView):
             })
 
         context['plandetails'] = plandetails
-
-        # Rück-Link zur vorherigen Seite oder zur Startseite hinzufügen
         context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
-
         context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
 
         return context
@@ -1114,8 +879,6 @@ class GesamtPersonaleinsatzplanUebersicht(ListView):
 
 
 # Ausgabe einer Personaleinsatzplanübersicht als PDF Bericht
-
-
 class PersonaleinsatzplanOverviewPDFView(View):
     def get(self, request, pk=None, niederlassung_pk=None, *args, **kwargs):
         # HTTP-Antwort vorbereiten, die als PDF zurückgegeben wird
@@ -1305,22 +1068,5 @@ class PersonaleinsatzplanOverviewPDFView(View):
                 elements.append(Table([[' ']]))  # Leerraum zwischen Tabellen
 
 
-# Neue Views für Anwendungsversion
 
-class PersonaleinsatzplaeneFuerNiederlassungView(ListView):
-    model = Personaleinsatzplan
-    template_name = 'personaleinsatzplan_list.html'
-    context_object_name = 'personaleinsatzplaene'
-
-    def get_queryset(self):
-        niederlassung_id = self.kwargs.get('pk')
-        return Personaleinsatzplan.objects.filter(niederlassung_id=niederlassung_id)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['niederlassung'] = Niederlassung.objects.get(pk=self.kwargs.get('pk'))
-
-        # `next`-Parameter auslesen, Standardwert: Startseite
-        context['zurueck_link'] = self.request.GET.get('next', reverse('PersonaleinsatzplanHaeH:startseite'))
-        return context
 

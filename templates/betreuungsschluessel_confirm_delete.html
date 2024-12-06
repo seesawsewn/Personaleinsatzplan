@@ -3,31 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <title>Betreuungsschlüssel löschen</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="delete-page">
 
-<h1>Betreuungsschlüssel löschen</h1>
-<p>Möchten Sie den Betreuungsschlüssel "{{ betreuungsschluessel.name }}" wirklich löschen?</p>
+<header>
+    <h1 class="page-title">Betreuungsschlüssel löschen</h1>
+</header>
 
-{% if error_message %}
-    <div class="alert alert-danger">
-        <p>{{ error_message }}</p>
-        {% if related_objects %}
-            <h3>Referenzierte Objekte:</h3>
-            <ul>
-                {% for obj in related_objects %}
-                    <li>{{ obj }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-    </div>
-{% endif %}
-
-<form method="post">
-    {% csrf_token %}
-    <button type="submit">Ja, löschen</button>
-    <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_detail' betreuungsschluessel.auftrag.pk %}">Abbrechen</a>
-</form>
+<main>
+    <p class="confirmation-message">Möchten Sie den Betreuungsschlüssel "{{ betreuungsschluessel.name }}" wirklich löschen?</p>
+    
+    <form method="post" class="delete-form">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Ja, löschen</button>
+        <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_detail' betreuungsschluessel.auftrag.pk %}" class="btn btn-secondary">Abbrechen</a>
+    </form>
+    
+        {% if error_message %}
+        <div class="alert alert-danger">
+            <p>{{ error_message }}</p>
+            {% if related_objects %}
+                <h4>Referenzierte Objekte:</h4>
+                <ul class="related-objects-list">
+                    {% for obj in related_objects %}
+                        <li>{{ obj }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    {% endif %}
+</main>
 
 </body>
 </html>

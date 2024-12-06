@@ -1,20 +1,41 @@
-{% if error_message %}
-  <div class="alert alert-danger">
-    <p>{{ error_message }}</p>
-    <ul>
-      {% for auftrag in related_auftraege %}
-        <li>
-          Auftrag: {{ auftrag.name }} 
-          (Vergabenummer: {{ auftrag.vergabenummer }}, Maßnahmenummer: {{ auftrag.massnahmenummer }})
-        </li>
-      {% endfor %}
-    </ul>
-  </div>
-{% endif %}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Mitarbeiter löschen</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="delete-page">
 
-<form method="post">
-  {% csrf_token %}
-  <p>Möchten Sie den Mitarbeiter wirklich löschen?</p>
-  <button type="submit" class="btn btn-danger">Löschen</button>
-  <a href="{{ object.get_absolute_url }}" class="btn btn-secondary">Abbrechen</a>
-</form>
+<header>
+    <h1 class="page-title">Mitarbeiter löschen</h1>
+</header>
+
+<main>
+    {% if error_message %}
+        <div class="alert alert-danger">
+            <p>{{ error_message }}</p>
+            <ul>
+                {% for auftrag in related_auftraege %}
+                    <li>
+                        Auftrag: {{ auftrag.name }}
+                        (Vergabenummer: {{ auftrag.vergabenummer }}, Maßnahmenummer: {{ auftrag.massnahmenummer }})
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <p class="confirmation-message">Möchten Sie den Mitarbeiter wirklich löschen?</p>
+
+    <form method="post" class="delete-form">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Ja, löschen</button>
+        <a href="{{ object.get_absolute_url }}" class="btn btn-secondary">Abbrechen</a>
+    </form>
+</main>
+
+</body>
+</html>

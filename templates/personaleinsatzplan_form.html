@@ -1,22 +1,32 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
-    <title>Neuen Personaleinsatzplan erstellen</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Persoanleinsatzplanangaben</title>
 </head>
-<body>
+<body class="personaleinsatzplan-seite">
 
-<h1>Neuen Personaleinsatzplan erstellen</h1>
+<h1>Persoanleinsatzplan erstellen</h1>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <input type="hidden" name="next" value="{{ request.GET.next }}">
-    <button type="submit">Speichern</button>
-</form>
+        <section class="form-section">
+            <form method="post" class="form">
+                {% csrf_token %}
+                <fieldset>
+                    <legend>Persoanleinsatzplanangaben</legend>
+                    {{ form.as_p }}
+                </fieldset>
+                <input type="hidden" name="next" value="{{ request.GET.next }}">
+                <button type="submit" class="btn btn-primary">Speichern</button>
+            </form>
+        </section>
 
 <!-- Zurück-Link -->
-<a href="{{ request.GET.next }}">Zurück</a>
+<div class="link-container">
+    <a href="{{ request.GET.next }}" class="action-link">Zurück</a>
+</div>
 
 </body>
 </html>

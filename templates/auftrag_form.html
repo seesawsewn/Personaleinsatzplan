@@ -1,22 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auftragsangaben</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
-<body>
-<!-- auftrag_form.html -->
-<h1>Auftrag erstellen/bearbeiten</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Speichern</button>
-</form>
-{% if request.META.HTTP_REFERER %}
-    <a href="{{ request.META.HTTP_REFERER }}">Zurück</a>
-{% else %}
-    <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_list' %}">Zurück zur Übersicht der Personaleinsatzpläne</a>
-{% endif %}
-
+<body class="personaleinsatzplan-seite">
+    <section class="form-section">
+        <h1>Auftrag erstellen</h1>
+        <form method="post" class="form">
+            <fieldset>
+                <legend>Auftragsangaben</legend>
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn">Speichern</button>
+        </fieldset>
+        </form>
+        <div class="link-container">
+            {% if request.META.HTTP_REFERER %}
+                <a href="{{ request.META.HTTP_REFERER }}" class="action-link">Zurück</a>
+            {% else %}
+                <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_list' %}" class="action-link">Zurück zur Übersicht der Personaleinsatzpläne</a>
+            {% endif %}
+        </div>
+    </section>
 </body>
 </html>

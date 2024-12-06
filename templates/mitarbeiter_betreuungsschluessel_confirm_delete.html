@@ -3,18 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <title>Mitarbeiter-Betreuungsschlüssel-Zuordnung löschen</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-<h1>Mitarbeiter-Betreuungsschlüssel-Zuordnung löschen</h1>
-<p>Möchten Sie die Zuordnung "{{ mitarbeiterbetreuungsschluessel }}" wirklich löschen?</p>
+<body class="delete-page">
 
-<form method="post">
-    {% csrf_token %}
-    <button type="submit">Ja, löschen</button>
-    <!-- Abbrechen-Link -->
-    <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_uebersicht' mitarbeiterbetreuungsschluessel.schluessel.auftrag.personaleinsatzplan.pk %}">
-        Abbrechen
-    </a>
-</form>
+<header>
+    <h1 class="page-title">Mitarbeiter-Betreuungsschlüssel-Zuordnung löschen</h1>
+</header>
+
+<main>
+    <p class="confirmation-message">Möchten Sie die Zuordnung "{{ mitarbeiterbetreuungsschluessel }}" wirklich löschen?</p>
+
+    <form method="post" class="delete-form">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Ja, löschen</button>
+        <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_uebersicht' mitarbeiterbetreuungsschluessel.schluessel.auftrag.personaleinsatzplan.pk %}" class="btn btn-secondary">
+            Abbrechen
+        </a>
+    </form>
+</main>
+
 </body>
 </html>

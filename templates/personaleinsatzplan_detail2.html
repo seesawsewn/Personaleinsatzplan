@@ -2,62 +2,70 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Personaleinsatzplan Detail</title>
+    <title>Personaleinsatzpläne</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
-<body>
-<h1>{{ personaleinsatzplan.name }}</h1>
+<body class="personaleinsatzplan-detail-seite">
 
-<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_update' personaleinsatzplan.pk %}?next={{ request.path }}">Bearbeiten</a>
-<a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_delete' personaleinsatzplan.pk %}?next={{ request.path }}">Löschen</a>
+<div class="navbar">
+    <a href="{% url 'PersonaleinsatzplanHaeH:logout' %}" class="logout-link">Abmelden</a>
+</div>
+
+<h1 class="page-title">{{ personaleinsatzplan.name }}</h1>
+
+<div class="actions">
+    <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_update' personaleinsatzplan.pk %}?next={{ request.path }}" class="action-link">Bearbeiten</a>
+    <a href="{% url 'PersonaleinsatzplanHaeH:personaleinsatzplan_delete' personaleinsatzplan.pk %}?next={{ request.path }}" class="action-link">Löschen</a>
+</div>
 
 <!-- Tabelle mit allgemeinen Informationen -->
-<table border="1">
-    <tr>
-        <th>Gültigkeit</th>
-        <td>{{ personaleinsatzplan.get_gueltigkeit_monat_display }} {{ personaleinsatzplan.gueltigkeit_jahr }}</td>
-        <th>Kostenträger</th>
-        <td>{{ personaleinsatzplan.kostentraeger }}</td>
-        <th>Ersteller</th>
-        <td>{{ personaleinsatzplan.ersteller }}</td>
-    </tr>
-    <tr>
-        <th>Version</th>
-        <td>{{ personaleinsatzplan.version }}</td>
-        <th>Status</th>
-        <td>{{ personaleinsatzplan.status }}</td>
-        <th>Niederlassung</th>
-        <td>{{ personaleinsatzplan.niederlassung }}</td>
-    </tr>
-</table>
+<section>
+    <table class="detail-table">
+        <tbody>
+            <tr>
+                <th>Gültigkeit</th>
+                <td>{{ personaleinsatzplan.get_gueltigkeit_monat_display }} {{ personaleinsatzplan.gueltigkeit_jahr }}</td>
+                <th>Kostenträger</th>
+                <td>{{ personaleinsatzplan.kostentraeger }}</td>
+                <th>Ersteller</th>
+                <td>{{ personaleinsatzplan.ersteller }}</td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td>{{ personaleinsatzplan.status }}</td>
+                <th>Niederlassung</th>
+                <td>{{ personaleinsatzplan.niederlassung }}</td>
+            </tr>
+        </tbody>
+    </table>
+</section>
 
 <!-- Tabelle mit den Aufträgen -->
-<h2>Aufträge</h2>
-<table border="1">
-    <thead>
-    <tr>
-        <th>Auftragsname</th>
-    </tr>
-    </thead>
-    <tbody>
-    {% for auftrag in personaleinsatzplan.auftraege.all %}
-    <tr>
-        <td>
-            <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_detail' auftrag.pk %}?next={{ request.path }}">
-                {{ auftrag.name }}
-            </a>
-        </td>
-    </tr>
-    {% endfor %}
-    </tbody>
-</table>
-<a href="{% url 'PersonaleinsatzplanHaeH:auftrag_create' %}?personaleinsatzplan_id={{ personaleinsatzplan.pk }}&next={{ request.path }}">
-    Neuen Auftrag erstellen
-</a>
+<section>
+    <h3 class="section-title">Aufträge</h3>
+    <table class="auftraege-table">
+        <tbody>
+            {% for auftrag in personaleinsatzplan.auftraege.all %}
+            <tr>
+                <td>
+                    <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_detail' auftrag.pk %}?next={{ request.path }}" class="auftrag-link">
+                        {{ auftrag.name }}
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_create' %}?personaleinsatzplan_id={{ personaleinsatzplan.pk }}&next={{ request.path }}" class="action-link">
+        Neuen Auftrag erstellen
+    </a>
+</section>
 
-<!-- Bearbeiten und Aktionen -->
-
-<a href="{{ zurueck_link }}">Zurück</a>
-
+<!-- Zurück-Link -->
+<div class="link-container">
+    <a href="{{ zurueck_link }}" class="action-link">Zurück</a>
+</div>
 
 </body>
 </html>

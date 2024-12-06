@@ -2,65 +2,83 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Personaleinsatzpläne</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
-<body>
+<body class="mitarbeiter-detail-page">
 
-<h1>{{ mitarbeiter.vorname }} {{ mitarbeiter.nachname }}</h1>
+<div class="navbar">
+    <a href="{% url 'PersonaleinsatzplanHaeH:logout' %}" class="logout-link">Abmelden</a>
+</div>
 
-<table border="1">
-    <thead>
-        <tr>
-            <th>Geburtsdatum</th>
-            <th>Qualifikation</th>
-            <th>Personalnummer</th>
-            <th>Vertragsbeginn</th>
-            <th>Vertragsende</th>
-            <th>Unbefristet</th>
-            <th>Niederlassung</th>
-            <th>Maximale wöchentliche Arbeitszeit</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>{{ mitarbeiter.geburtsdatum }}</td>
-            <td>{{ mitarbeiter.qualifikation }}</td>
-            <td>{{ mitarbeiter.personalnummer }}</td>
-            <td>{{ mitarbeiter.vertragsbeginn }}</td>
-            <td>{{ mitarbeiter.vertragsendeBefristet }}</td>
-            <td>{{ mitarbeiter.unbefristet }}</td>
-            <td>{{ mitarbeiter.niederlassung }}</td>
-            <td>{{ mitarbeiter.max_woechentliche_arbeitszeit }} Stunden</td>
-        </tr>
-    </tbody>
-</table>
+<h1 class="mitarbeiter-header">{{ mitarbeiter.vorname }} {{ mitarbeiter.nachname }}</h1>
+<div class="actions">
+    <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_update' mitarbeiter.pk %}" class="action-link">Bearbeiten</a>
+    <a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_delete' mitarbeiter.pk %}" class="action-link">Löschen</a>
+</div>
 
-<table border="1">
-    <thead>
-        <tr>
-            <th>Auftrag</th>
-            <th>Anteil Stunden pro Woche</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for auftrag_info in auftraege_info %}
-        <tr>
-            <td>
-                <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_detail' auftrag_info.auftrag.pk %}?next={{ request.path }}">
-                    {{ auftrag_info.auftrag.name }}
-                </a>
-            </td>
-            <td>{{ auftrag_info.anteil_stunden_pro_woche }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<section>
+    <table class="detail-table">
+        <thead>
+            <tr>
+                <th>Geburtsdatum</th>
+                <th>Qualifikation</th>
+                <th>Personalnummer</th>
+                <th>Vertragsbeginn</th>
+                <th>Vertragsende</th>
+                <th>Unbefristet</th>
+                <th>Niederlassung</th>
+                <th>Maximale wöchentliche Arbeitszeit</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ mitarbeiter.geburtsdatum|date:"d.m.Y" }}</td>
+                <td>{{ mitarbeiter.qualifikation }}</td>
+                <td>{{ mitarbeiter.personalnummer }}</td>
+                <td>{{ mitarbeiter.vertragsbeginn|date:"d.m.Y" }}</td>
+                <td>
+                    {% if mitarbeiter.vertragsendeBefristet %}
+                    {{ mitarbeiter.vertragsendeBefristet|date:"d.m.Y" }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>{{ mitarbeiter.unbefristet|yesno:"Ja,Nein" }}</td>
+                <td>{{ mitarbeiter.niederlassung }}</td>
+                <td>{{ mitarbeiter.max_woechentliche_arbeitszeit }} Stunden</td>
+            </tr>
+        </tbody>
+    </table>
+</section>
 
-<p><strong>Verbleibende Stunden: {{ differenz_stunden }} Stunden</strong></p>
+<section>
+    <table class="auftrag-table">
+        <thead>
+            <tr>
+                <th>Auftrag</th>
+                <th>Anteil Stunden pro Woche</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for auftrag_info in auftraege_info %}
+            <tr>
+                <td>
+                    <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_detail' auftrag_info.auftrag.pk %}?next={{ request.path }}" class="auftrag-link">
+                        {{ auftrag_info.auftrag.name }}
+                    </a>
+                </td>
+                <td>{{ auftrag_info.anteil_stunden_pro_woche }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
 
-<a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_update' mitarbeiter.pk %}">Bearbeiten</a>
-<a href="{% url 'PersonaleinsatzplanHaeH:mitarbeiter_delete' mitarbeiter.pk %}">Löschen</a>
-<a href="{{ zurueck_link }}">Zurück</a>
+<div class="link-container">
+    <a href="{{ zurueck_link }}" class="action-link">Zurück</a>
+</div>
 
 </body>
 </html>

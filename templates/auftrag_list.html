@@ -3,28 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <title>Aufträge</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
+
+<div class="navbar">
+    <a href="{% url 'PersonaleinsatzplanHaeH:logout' %}" class="logout-link">Abmelden</a>
+</div>
+
 <h1>Aufträge</h1>
 
 <!-- Filterformular -->
-<form method="get">
-    <label for="standort_filter">Nach Standort filtern:</label>
-    <select name="niederlassung" id="standort_filter" onchange="this.form.submit()">
-        <option value="">Alle Standorte</option>
-        {% for niederlassung in niederlassungen %}
-        <option value="{{ niederlassung.id }}" {% if request.GET.niederlassung == niederlassung.id|stringformat:"s" %}selected{% endif %}>
-            {{ niederlassung.name }}
-        </option>
-        {% endfor %}
-    </select>
+<form method="get" class="filter-form">
+    <div class="filter-row" style="display: flex; align-items: center; gap: 10px;">
+        <label for="standort_filter">Nach Standort filtern:</label>
+        <select name="niederlassung" id="standort_filter" onchange="this.form.submit()" class="filter-select">
+            <option value="">Alle Standorte</option>
+            {% for niederlassung in niederlassungen %}
+            <option value="{{ niederlassung.id }}" {% if request.GET.niederlassung == niederlassung.id|stringformat:"s" %}selected{% endif %}>
+                {{ niederlassung.name }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <label for="jahr_filter">Nach Jahr filtern:</label>
+        <select name="jahr" id="jahr_filter" onchange="this.form.submit()" class="filter-select">
+            <option value="">Alle Jahre</option>
+            {% for jahr in jahre %}
+            <option value="{{ jahr }}" {% if request.GET.jahr == jahr|stringformat:"s" %}selected{% endif %}>
+                {{ jahr }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
 </form>
 
 <!-- Tabelle mit Aufträgen -->
-<table border="1">
+<table>
     <thead>
         <tr>
-            <th>Auftrag</th>
+            <th>Auftragsnamen</th>
             <th>Maßnahmenummer</th>
             <th>Zeitraum</th>
         </tr>
@@ -33,18 +52,22 @@
         {% for auftrag in auftraege %}
         <tr>
             <td>
-                <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_detail' auftrag.pk %}?next={{ request.path }}">
+                <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_detail' auftrag.pk %}?next={{ request.path }}" class="card-link">
                     {{ auftrag.name }}
                 </a>
             </td>
             <td>{{ auftrag.massnahmenummer }}</td>
-            <td>{{ auftrag.startdatum }} - {{ auftrag.enddatum }}</td>
+            <td>{{ auftrag.startdatum|date:"d.m.Y" }} - {{ auftrag.enddatum|date:"d.m.Y" }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
-<a href="{% url 'PersonaleinsatzplanHaeH:auftrag_create' %}?next={{ request.path }}">Neuen Auftrag erstellen</a>
-<a href="{{ zurueck_link }}">Zurück</a>
+<div class="actions">
+    <a href="{% url 'PersonaleinsatzplanHaeH:auftrag_create' %}?next={{ request.path }}" class="action-link">
+        Neuen Auftrag erstellen
+    </a>
+    <a href="{{ zurueck_link }}" class="action-link">Zurück</a>
+</div>
 </body>
 </html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Anmeldung</title>
+</head>
+<body>
+
+
+<h1>Willkommen zur F1 Personaleinsatzplanung</h1>
+
+<div class="form-section">
+    <h2>Anmeldung</h2>
+    <form method="post">
+    {% csrf_token %}
+    <label for="id_username">Benutzername</label>
+    {{ form.username }}
+    <label for="id_password">Passwort</label>
+    {{ form.password }}
+    <button type="submit" class="btn">Anmelden</button>
+</form>
+
+</div>
+
+</body>
+</html>

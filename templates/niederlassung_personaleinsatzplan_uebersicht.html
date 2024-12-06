@@ -6,6 +6,10 @@
 </head>
 <body>
 
+<div class="navbar">
+    <a href="{% url 'PersonaleinsatzplanHaeH:logout' %}" class="logout-link">Abmelden</a>
+</div>
+
 <h2>Personaleinsatzpläne für Niederlassung: {{ niederlassung.name }}</h2>
 
 {% for plandetail in plandetails %}
