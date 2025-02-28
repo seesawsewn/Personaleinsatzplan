@@ -24,6 +24,7 @@ urlpatterns = [
     path('', StartseiteView.as_view(), name='startseite'),
     # Personaleinsatzplan URLs
     path('personaleinsatzplan/create/', PersonaleinsatzplanCreateView.as_view(), name='personaleinsatzplan_create'),
+    path("personaleinsatzplan/list/", PersonaleinsatzplanList2View.as_view(), name="personaleinsatzplan_list"),
     path('personaleinsatzplan/list2/', PersonaleinsatzplanList2View.as_view(), name='personaleinsatzplan_list2'),
     path('personaleinsatzplan/<int:pk>/', PersonaleinsatzplanDetailView.as_view(), name='personaleinsatzplan_detail'),
     path('personaleinsatzplan/<int:pk>/detail2/', PersonaleinsatzplanDetail2.as_view(), name='personaleinsatzplan_detail2'),
